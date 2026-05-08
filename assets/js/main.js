@@ -14,6 +14,7 @@
   Update History:
   - 02.05.2026  [Oliver Braun]   Project initialization
   - 08.05.2026  [Oliver Braun]   Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling.
+  - 08.05.2026  [Oliver Braun]   Add local WebLLM chat assistant.
 
 
   Independently developed by me.
@@ -23,6 +24,9 @@
 (function () {
   const STORAGE_KEY = "kins-language";
   const THEME_KEY = "kins-theme";
+  const AI_CHAT_SETTINGS_KEY = "kins-ai-chat-settings";
+  const AI_ASSISTANT_MODEL = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
+  const FALLBACK_AI_CHAT_SETTINGS = { model: AI_ASSISTANT_MODEL, temperature: 0.35, maxTokens: 320, contextChars: 5200, cacheBackend: "indexeddb", useFallback: true, showTech: false, showDebugData: false, accent: "#14b8a6" };
   const DEFAULT_LANG = "de";
   const state = {
     lang: localStorage.getItem(STORAGE_KEY) || DEFAULT_LANG,
@@ -38,9 +42,33 @@
     _eventsPageContent: null,
     _blogPageContent: null,
     _globalData: null,
+    _aiChatContent: null,
     _eventCardCountdownTimer: null,
     _markdownParser: null,
     _markdownReadyPromise: null,
+    _assistantEnginePromise: null,
+    _assistantEngine: null,
+    _assistantContextData: null,
+    _assistantMessages: [],
+    _assistantBusy: false,
+    _assistantCancelRequested: false,
+    _assistantRunId: 0,
+    _assistantSettings: { ...FALLBACK_AI_CHAT_SETTINGS },
+    _assistantTech: {
+      model: AI_ASSISTANT_MODEL,
+      runtime: "WebLLM + WebGPU",
+      webgpu: "prüft...",
+      adapter: "prüft...",
+      progress: "nicht geladen",
+      loadMs: null,
+      lastLatencyMs: null,
+      lastPromptChars: 0,
+      lastContextChars: 0,
+      contextStatus: "",
+      downloadProgress: "",
+      fallback: false,
+      lastError: ""
+    },
     /** @type {null | (() => void)} */
     _networkScrollCleanup: null
   };
@@ -54,7 +82,6 @@
     initTheme();
     console.log("Theme initialized");
     await loadPageTextContent();
-    await ensureMarkdownParser();
     console.log("Page text content loaded");
     initHeaderNetworkAnimation();
     applyTranslations();
@@ -64,6 +91,7 @@
     highlightActiveNav();
     setFooterYear();
     await runPageScript();
+    await initAiChatAssistant();
     console.log("Page script run");
   }
 
@@ -89,18 +117,27 @@
   async function loadBaseLayout() {
     const headerSlot = document.getElementById("site-header");
     const footerSlot = document.getElementById("site-footer");
+    let aiChatSlot = document.getElementById("ai-chat-root");
     if (headerSlot) {
       headerSlot.innerHTML = await fetchText("./components/header.html");
     }
     if (footerSlot) {
       footerSlot.innerHTML = await fetchText("./components/footer.html");
     }
+    if (!aiChatSlot) {
+      aiChatSlot = document.createElement("div");
+      aiChatSlot.id = "ai-chat-root";
+      document.body.appendChild(aiChatSlot);
+    }
+    state.components.aiChat = await fetchText("./components/ai-chat.html");
+    aiChatSlot.innerHTML = state.components.aiChat;
     state.components.eventCard = await fetchText("./components/event-card.html");
     state.components.blogCard = await fetchText("./components/blog-card.html");
 
     const headerMounted = !!(headerSlot?.querySelector?.(".site-header") || document.querySelector(".site-header"));
     const cardsLoaded = Boolean(state.components.eventCard && state.components.blogCard);
-    if (!headerMounted || !cardsLoaded) showNeedsServerBanner();
+    const aiChatLoaded = Boolean(aiChatSlot.querySelector?.(".ai-chat"));
+    if (!headerMounted || !cardsLoaded || !aiChatLoaded) showNeedsServerBanner();
   }
 
   async function runPageScript() {
@@ -282,19 +319,22 @@
 
   async function loadPageTextContent() {
     console.log("Loading page text content");
-    const [homeData, aboutData, eventsData, blogData, globalData] = await Promise.all([
+    const [homeData, aboutData, eventsData, blogData, globalData, aiChatData] = await Promise.all([
       fetchJson("./data/home/home-page.json"),
       fetchJson("./data/about/about-page.json"),
       fetchJson("./data/event/events-page.json"),
       fetchJson("./data/blog/blog-page.json"),
-      fetchJson("./data/global/global.json")
+      fetchJson("./data/global/global.json"),
+      fetchJson("./data/global/ai-chat.json")
     ]);
-    console.log("Fetched data:", { homeData, aboutData, eventsData, blogData, globalData });
+    console.log("Fetched data:", { homeData, aboutData, eventsData, blogData, globalData, aiChatData });
     state._homePageContent = homeData || null;
     state._aboutPageContent = aboutData || null;
     state._eventsPageContent = eventsData || null;
     state._blogPageContent = blogData || null;
     state._globalData = globalData || null;
+    state._aiChatContent = aiChatData || null;
+    state._assistantSettings = loadAiChatSettings();
   }
 
   function applyTranslations() {
@@ -320,6 +360,7 @@
         applyTranslations();
         wireLanguageSwitch();
         await runPageScript();
+        await initAiChatAssistant();
       });
     });
   }
@@ -471,6 +512,888 @@
     renderLatestPosts(Array.isArray(posts) ? posts : []);
     renderHomeSponsors();
     initNetworkAnimation();
+  }
+
+  async function initAiChatAssistant() {
+    let root = document.getElementById("ai-chat-root");
+    if (!root) {
+      root = document.createElement("div");
+      root.id = "ai-chat-root";
+      document.body.appendChild(root);
+    }
+    if (state.components.aiChat) root.innerHTML = state.components.aiChat;
+
+    const labels = getAiChatLabels();
+    const knownGreetings = Object.values(state._aiChatContent?.labels || {}).map((entry) => entry?.greeting).filter(Boolean);
+    if (!state._assistantMessages.length) {
+      state._assistantMessages = [{ role: "assistant", content: labels.greeting }];
+    } else if (
+      state._assistantMessages.length === 1 &&
+      state._assistantMessages[0].role === "assistant" &&
+      knownGreetings.includes(state._assistantMessages[0].content)
+    ) {
+      state._assistantMessages[0].content = labels.greeting;
+    }
+
+    const chat = root.querySelector(".ai-chat");
+    const toggle = root.querySelector(".ai-chat-toggle");
+    const panel = root.querySelector(".ai-chat-panel");
+    const close = root.querySelector(".ai-chat-close");
+    const settingsToggle = root.querySelector(".ai-chat-settings-toggle");
+    const settingsPanel = root.querySelector("#ai-chat-settings");
+    const form = root.querySelector("[data-ai-chat-form]");
+    const input = root.querySelector("#ai-chat-input");
+    const status = root.querySelector("[data-ai-chat-status]");
+    const submit = root.querySelector(".ai-chat-form button[type='submit']");
+    applyAiChatLabels(root, labels);
+    renderAiChatModelOptions(root);
+
+    const sendMessage = async (rawMessage) => {
+      if (state._assistantBusy) {
+        cancelAiChatRun(root);
+        return;
+      }
+      const message = String(rawMessage || "").trim();
+      if (!message) return;
+      if (input) input.value = "";
+      resizeAiChatInput(input);
+      await handleAiChatMessage(message, root, status, input, submit);
+    };
+
+    const setOpen = (open) => {
+      if (!chat || !panel || !toggle) return;
+      chat.classList.toggle("ai-chat--open", open);
+      panel.hidden = !open;
+      panel.setAttribute("aria-hidden", String(!open));
+      toggle.setAttribute("aria-expanded", String(open));
+      if (!open && settingsPanel) {
+        chat.classList.remove("ai-chat--settings-open");
+        settingsPanel.hidden = true;
+        settingsPanel.setAttribute("aria-hidden", "true");
+        settingsToggle?.setAttribute("aria-expanded", "false");
+      }
+      if (open) window.setTimeout(() => input?.focus(), 0);
+    };
+
+    applyAiChatSettings(root);
+    setOpen(false);
+
+    toggle?.addEventListener("click", () => setOpen(panel.hidden));
+    close?.addEventListener("click", () => setOpen(false));
+    settingsToggle?.addEventListener("click", () => {
+      const open = Boolean(settingsPanel?.hidden);
+      chat?.classList.toggle("ai-chat--settings-open", open);
+      if (settingsPanel) {
+        settingsPanel.hidden = !open;
+        settingsPanel.setAttribute("aria-hidden", String(!open));
+      }
+      settingsToggle.setAttribute("aria-expanded", String(open));
+    });
+    root.querySelectorAll("[data-ai-setting]").forEach((control) => {
+      control.addEventListener("input", () => {
+        updateAiChatSettingFromControl(control);
+        saveAiChatSettings();
+        applyAiChatSettings(root);
+      });
+      control.addEventListener("change", () => {
+        updateAiChatSettingFromControl(control);
+        saveAiChatSettings();
+        applyAiChatSettings(root);
+      });
+    });
+    root.querySelector(".ai-chat-reset")?.addEventListener("click", () => {
+      state._assistantSettings = getResponsiveDefaultAiChatSettings();
+      saveAiChatSettings();
+      applyAiChatSettings(root);
+    });
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await sendMessage(input?.value || "");
+    });
+    submit?.addEventListener("click", (event) => {
+      if (!state._assistantBusy) return;
+      event.preventDefault();
+      cancelAiChatRun(root);
+    });
+    input?.addEventListener("input", () => resizeAiChatInput(input));
+    resizeAiChatInput(input);
+
+    renderAiChatMessages(root);
+    renderAiChatTechInfo(root);
+    renderAiChatDebugData(root);
+    detectAiChatRuntime(root);
+  }
+
+  function getAiChatLabels() {
+    const labels = state._aiChatContent?.labels || {};
+    return labels[state.lang] || labels.de || {};
+  }
+
+  function getAiChatModels() {
+    const models = state._aiChatContent?.models;
+    return Array.isArray(models) && models.length ? models : [{ id: AI_ASSISTANT_MODEL, label: "Qwen2.5 0.5B" }];
+  }
+
+  function getAiChatModuleUrls() {
+    const urls = state._aiChatContent?.webLlmModuleUrls;
+    return Array.isArray(urls) && urls.length ? urls : [];
+  }
+
+  function getAiChatDefaultSettings() {
+    return { ...FALLBACK_AI_CHAT_SETTINGS, ...(state._aiChatContent?.defaultSettings || {}) };
+  }
+
+  function normalizeAiChatSettings(settings) {
+    const defaults = getAiChatDefaultSettings();
+    const next = { ...defaults, ...(settings || {}) };
+    const modelIds = getAiChatModels().map((model) => model.id);
+    if (!modelIds.includes(next.model)) next.model = defaults.model;
+    return next;
+  }
+
+  function applyAiChatLabels(root, labels) {
+    root.querySelectorAll("[data-ai-label]").forEach((el) => {
+      const key = el.dataset.aiLabel;
+      el.textContent = labels[key] || "";
+    });
+    const chat = root.querySelector(".ai-chat");
+    const toggle = root.querySelector(".ai-chat-toggle");
+    const close = root.querySelector(".ai-chat-close");
+    const settingsToggle = root.querySelector(".ai-chat-settings-toggle");
+    const metrics = root.querySelector(".ai-chat-metrics");
+    const input = root.querySelector("#ai-chat-input");
+    const submit = root.querySelector(".ai-chat-submit");
+    chat?.setAttribute("aria-label", labels.title || "");
+    toggle?.setAttribute("aria-label", labels.button || "");
+    toggle?.setAttribute("title", labels.button || "");
+    close?.setAttribute("aria-label", labels.close || "");
+    settingsToggle?.setAttribute("aria-label", labels.settings || "");
+    metrics?.setAttribute("aria-label", labels.metricsLabel || "");
+    if (input) input.placeholder = labels.placeholder || "";
+    if (submit) {
+      submit.setAttribute("aria-label", labels.send || "");
+      submit.title = labels.send || "";
+    }
+  }
+
+  function renderAiChatModelOptions(root) {
+    const select = root?.querySelector?.("[data-ai-setting='model']");
+    if (!select) return;
+    select.innerHTML = getAiChatModels()
+      .map((model) => `<option value="${escapeHtml(model.id)}">${escapeHtml(model.label || model.id)}</option>`)
+      .join("");
+  }
+
+  function getSelectedAiChatModelInfo() {
+    const selected = state._assistantSettings.model || AI_ASSISTANT_MODEL;
+    return getAiChatModels().find((model) => model.id === selected) || getAiChatModels()[0] || {};
+  }
+
+  function renderAiChatModelInfo(root) {
+    const box = root?.querySelector?.("[data-ai-model-info]");
+    if (!box) return;
+    const model = getSelectedAiChatModelInfo();
+    const localModelValue = (value) => (typeof value === "object" ? value[state.lang] || value.de || "" : value || "");
+    const note = typeof model.bestFor === "object" ? model.bestFor[state.lang] || model.bestFor.de : model.bestFor;
+    box.innerHTML = `
+      <strong>${escapeHtml(model.label || model.id || "")}</strong>
+      <span>${escapeHtml([model.size, localModelValue(model.speed), localModelValue(model.memory)].filter(Boolean).join(" · "))}</span>
+      ${note ? `<p>${escapeHtml(note)}</p>` : ""}
+    `;
+  }
+
+  function getResponsiveDefaultAiChatSettings() {
+    return getAiChatDefaultSettings();
+  }
+
+  function loadAiChatSettings() {
+    const defaults = getResponsiveDefaultAiChatSettings();
+    try {
+      const saved = JSON.parse(localStorage.getItem(AI_CHAT_SETTINGS_KEY) || "null");
+      if (!saved || typeof saved !== "object") return defaults;
+      return normalizeAiChatSettings(saved);
+    } catch (_) {
+      return defaults;
+    }
+  }
+
+  function saveAiChatSettings() {
+    localStorage.setItem(AI_CHAT_SETTINGS_KEY, JSON.stringify(state._assistantSettings));
+  }
+
+  function updateAiChatSettingFromControl(control) {
+    const key = control?.dataset?.aiSetting;
+    if (!key || !(key in state._assistantSettings)) return;
+    const previousModel = state._assistantSettings.model;
+    if (control.type === "checkbox") {
+      state._assistantSettings[key] = Boolean(control.checked);
+    } else if (control.type === "number" || control.type === "range") {
+      state._assistantSettings[key] = Number(control.value);
+    } else {
+      state._assistantSettings[key] = control.value;
+    }
+    if ((key === "model" && state._assistantSettings.model !== previousModel) || key === "cacheBackend") {
+      state._assistantEnginePromise = null;
+      state._assistantEngine = null;
+      state._assistantTech.progress = "Modell gewechselt";
+      state._assistantTech.loadMs = null;
+    }
+    state._assistantTech.model = state._assistantSettings.model;
+  }
+
+  function applyAiChatSettings(root) {
+    const chat = root?.querySelector?.(".ai-chat");
+    if (!chat) return;
+    const settings = state._assistantSettings;
+    chat.classList.add("ai-chat--compact", "ai-chat--right");
+    chat.style.setProperty("--ai-chat-accent", settings.accent || FALLBACK_AI_CHAT_SETTINGS.accent);
+    state._assistantTech.model = settings.model || AI_ASSISTANT_MODEL;
+
+    const setVisible = (selector, visible) => {
+      root.querySelectorAll(selector).forEach((el) => {
+        el.hidden = !visible;
+      });
+    };
+    setVisible(".ai-chat-metrics", true);
+    setVisible(".ai-chat-tech", settings.showTech);
+    setVisible(".ai-chat-debug", settings.showDebugData);
+    const modelChip = root.querySelector("[data-ai-chip-model]");
+    if (modelChip) modelChip.textContent = settings.model.replace("-Instruct-q4f16_1-MLC", "");
+    renderAiChatModelInfo(root);
+    renderAiChatDebugData(root);
+
+    root.querySelectorAll("[data-ai-setting]").forEach((control) => {
+      const key = control.dataset.aiSetting;
+      if (!(key in settings)) return;
+      if (control.type === "checkbox") {
+        control.checked = Boolean(settings[key]);
+      } else {
+        control.value = settings[key];
+      }
+    });
+  }
+
+  function resizeAiChatInput(input) {
+    if (!input) return;
+    input.style.height = "auto";
+    const maxHeight = 112;
+    input.style.height = `${Math.min(input.scrollHeight, maxHeight)}px`;
+    input.style.overflowY = input.scrollHeight > maxHeight ? "auto" : "hidden";
+  }
+
+  function setAiChatBusy(root, busy) {
+    const chat = root?.querySelector?.(".ai-chat");
+    const submit = root?.querySelector?.(".ai-chat-submit");
+    const labels = getAiChatLabels();
+    chat?.classList.toggle("ai-chat--busy", busy);
+    if (submit) {
+      submit.setAttribute("aria-label", busy ? labels.stop : labels.send);
+      submit.title = busy ? labels.stop : labels.send;
+    }
+  }
+
+  function cancelAiChatRun(root) {
+    const labels = getAiChatLabels();
+    if (!state._assistantBusy) return;
+    state._assistantCancelRequested = true;
+    state._assistantRunId += 1;
+    state._assistantBusy = false;
+    setAiChatBusy(root, false);
+    setAiChatLive(root, labels.canceling, true);
+    try {
+      state._assistantEngine?.interruptGenerate?.();
+    } catch (error) {
+      console.warn("Could not interrupt WebLLM generation:", error);
+    }
+    state._assistantEnginePromise = null;
+    state._assistantTech.progress = labels.cancelled || "cancelled";
+    renderAiChatTechInfo(root);
+  }
+
+  async function getAiChatContextData(root) {
+    if (state._assistantContextData?.lang === state.lang) return state._assistantContextData;
+    const labels = getAiChatLabels();
+    state._assistantTech.contextStatus = labels.loadingContext || "loading";
+    setAiChatLive(root, labels.loadingContext || labels.loading, true);
+    renderAiChatTechInfo(root);
+    const [events, posts] = await Promise.all([loadEvents(), loadPostsIndex()]);
+    const context = buildAiAssistantContext(events, posts);
+    state._assistantContextData = {
+      lang: state.lang,
+      events: Array.isArray(events) ? events : [],
+      posts: Array.isArray(posts) ? posts : [],
+      context,
+      builtAt: new Date().toISOString()
+    };
+    state._assistantTech.contextStatus = labels.contextLoaded || "loaded";
+    state._assistantTech.lastContextChars = context.length;
+    renderAiChatTechInfo(root);
+    renderAiChatDebugData(root);
+    return state._assistantContextData;
+  }
+
+  async function handleAiChatMessage(message, root, statusEl, inputEl, submitEl) {
+    const labels = getAiChatLabels();
+    const startedAt = performance.now();
+    const runId = state._assistantRunId + 1;
+    state._assistantRunId = runId;
+    state._assistantCancelRequested = false;
+    state._assistantBusy = true;
+    if (submitEl) submitEl.disabled = false;
+    setAiChatBusy(root, true);
+    state._assistantMessages.push({ role: "user", content: message });
+    state._assistantTech.lastPromptChars = message.length;
+    state._assistantTech.lastError = "";
+    renderAiChatMessages(root);
+    renderAiChatTechInfo(root);
+    setAiChatLive(root, labels.loadingContext || labels.loading, true);
+    setAiChatStatus(statusEl, labels.loadingContext || labels.loading);
+
+    try {
+      const contextData = await getAiChatContextData(root);
+      if (state._assistantCancelRequested || runId !== state._assistantRunId) {
+        throw new Error("Berechnung abgebrochen");
+      }
+      const engine = await ensureAiAssistantEngine((progressText, mode) => {
+        if (state._assistantCancelRequested || runId !== state._assistantRunId) return;
+        setAiChatLive(root, progressText || labels.loading, true, mode || "loading");
+        setAiChatStatus(statusEl, progressText || labels.loading);
+      });
+      if (state._assistantCancelRequested || runId !== state._assistantRunId) {
+        throw new Error("Berechnung abgebrochen");
+      }
+      setAiChatLive(root, labels.thinking, true);
+      setAiChatStatus(statusEl, labels.thinking);
+
+      const messages = [
+        { role: "system", content: buildAiAssistantSystemPrompt(contextData.events, contextData.posts) },
+        ...state._assistantMessages.slice(-8).map((entry) => ({
+          role: entry.role,
+          content: entry.content
+        }))
+      ];
+      const answer = await createAiAssistantCompletion(engine, messages, root, runId);
+      if (!answer.trim()) {
+        state._assistantMessages.push({ role: "assistant", content: labels.error });
+      }
+      state._assistantTech.fallback = false;
+      state._assistantTech.lastLatencyMs = Math.round(performance.now() - startedAt);
+      setAiChatLive(root, labels.completed, false);
+      setAiChatStatus(statusEl, labels.privacy);
+    } catch (error) {
+      if (state._assistantCancelRequested || runId !== state._assistantRunId) {
+        setAiChatLive(root, labels.cancelled, false);
+        return;
+      }
+      console.warn("AI assistant failed:", error);
+      const technicalReason = error?.message || String(error || "Unknown error");
+      state._assistantTech.fallback = true;
+      state._assistantTech.lastLatencyMs = Math.round(performance.now() - startedAt);
+      state._assistantTech.lastError = technicalReason;
+      const contextData = state._assistantContextData?.lang === state.lang ? state._assistantContextData : null;
+      if (isAiModelDownloadError(error)) {
+        const fallback = state._assistantSettings.useFallback
+          ? `\n\n${buildLocalContextFallbackAnswer(message, contextData?.events || [], contextData?.posts || [])}`
+          : "";
+        state._assistantMessages.push({
+          role: "assistant",
+          content: `${labels.modelDownloadError}${fallback}\n\n${labels.technicalNotice}: ${technicalReason}`
+        });
+        setAiChatLive(root, `${labels.modelDownloadError}`, true, "error");
+        setAiChatStatus(statusEl, labels.modelDownloadError);
+        return;
+      }
+      const fallback = state._assistantSettings.useFallback
+        ? buildLocalContextFallbackAnswer(message, contextData?.events || [], contextData?.posts || [])
+        : labels.error;
+      state._assistantMessages.push({
+        role: "assistant",
+        content: `${fallback}\n\n${labels.technicalNotice}: ${technicalReason}`
+      });
+      setAiChatLive(root, `WebLLM nicht verfügbar: ${technicalReason}`, true, "error");
+      setAiChatStatus(statusEl, !navigator.gpu ? labels.webgpuMissing : labels.fallback);
+    } finally {
+      if (runId === state._assistantRunId) {
+        state._assistantBusy = false;
+        state._assistantCancelRequested = false;
+        setAiChatBusy(root, false);
+      }
+      renderAiChatMessages(root);
+      renderAiChatTechInfo(root);
+      renderAiChatDebugData(root);
+      inputEl?.focus();
+    }
+  }
+
+  async function createAiAssistantCompletion(engine, messages, root, runId) {
+    const request = {
+      messages,
+      temperature: Number(state._assistantSettings.temperature) || 0.35,
+      max_tokens: Number(state._assistantSettings.maxTokens) || 320
+    };
+
+    const assistantMessage = { role: "assistant", content: "" };
+    state._assistantMessages.push(assistantMessage);
+    renderAiChatMessages(root);
+
+    try {
+      if (state._assistantCancelRequested || runId !== state._assistantRunId) {
+        removeAiChatMessage(assistantMessage);
+        return "";
+      }
+      const stream = await engine.chat.completions.create({
+        ...request,
+        stream: true
+      });
+      for await (const chunk of stream) {
+        if (state._assistantCancelRequested || runId !== state._assistantRunId) {
+          try {
+            state._assistantEngine?.interruptGenerate?.();
+          } catch (_) {
+            // ignore unsupported interruption
+          }
+          removeAiChatMessage(assistantMessage);
+          renderAiChatMessages(root);
+          return "";
+        }
+        const delta = chunk?.choices?.[0]?.delta?.content || "";
+        if (!delta) continue;
+        assistantMessage.content += delta;
+        setAiChatLive(root, `WebLLM: ${assistantMessage.content.length} Zeichen`, true);
+        renderAiChatMessages(root);
+      }
+      assistantMessage.content = assistantMessage.content.trim();
+      renderAiChatMessages(root);
+      return assistantMessage.content;
+    } catch (streamError) {
+      removeAiChatMessage(assistantMessage);
+      if (state._assistantCancelRequested || runId !== state._assistantRunId) return "";
+      console.warn("WebLLM streaming failed, retrying without stream:", streamError);
+      setAiChatLive(root, getAiChatLabels().streamFallback, true);
+      const completion = await engine.chat.completions.create(request);
+      if (state._assistantCancelRequested || runId !== state._assistantRunId) return "";
+      const answer = completion?.choices?.[0]?.message?.content?.trim() || "";
+      state._assistantMessages.push({ role: "assistant", content: answer });
+      renderAiChatMessages(root);
+      return answer;
+    }
+  }
+
+  function removeAiChatMessage(message) {
+    const index = state._assistantMessages.indexOf(message);
+    if (index >= 0) state._assistantMessages.splice(index, 1);
+  }
+
+  async function ensureAiAssistantEngine(onProgress) {
+    const labels = getAiChatLabels();
+    if (!navigator.gpu) {
+      throw new Error("WebGPU is not available");
+    }
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+      throw new Error("No WebGPU adapter found");
+    }
+    if (state._assistantEnginePromise) return state._assistantEnginePromise;
+    const loadStartedAt = performance.now();
+    state._assistantTech.downloadProgress = labels.downloadPreparing || "";
+    onProgress?.(state._assistantTech.downloadProgress, "loading");
+    state._assistantEnginePromise = importWebLlmModule()
+      .then((webllm) =>
+        webllm.CreateMLCEngine(state._assistantSettings.model || AI_ASSISTANT_MODEL, {
+          appConfig: {
+            ...(webllm.prebuiltAppConfig || {}),
+            cacheBackend: state._assistantSettings.cacheBackend || "indexeddb"
+          },
+          initProgressCallback: (progress) => {
+            const formatted = formatAiModelDownloadProgress(progress);
+            state._assistantTech.downloadProgress = formatted;
+            state._assistantTech.progress = formatted || labels.loading;
+            onProgress?.(state._assistantTech.progress, "loading");
+          }
+        })
+      )
+      .then((engine) => {
+        state._assistantEngine = engine;
+        state._assistantTech.progress = "bereit";
+        state._assistantTech.downloadProgress = "";
+        state._assistantTech.loadMs = Math.round(performance.now() - loadStartedAt);
+        return engine;
+      })
+      .catch((error) => {
+        state._assistantEnginePromise = null;
+        state._assistantEngine = null;
+        state._assistantTech.progress = "Fehler";
+        state._assistantTech.downloadProgress = "";
+        state._assistantTech.lastError = error?.message || String(error || "Unbekannter Fehler");
+        renderAiChatTechInfo(document.getElementById("ai-chat-root"));
+        throw error;
+      });
+    return state._assistantEnginePromise;
+  }
+
+  async function importWebLlmModule() {
+    let lastError = null;
+    for (const url of getAiChatModuleUrls()) {
+      try {
+        return await import(url);
+      } catch (error) {
+        lastError = error;
+        console.warn("WebLLM module import failed:", url, error);
+      }
+    }
+    throw lastError || new Error("WebLLM module could not be imported");
+  }
+
+  function renderAiChatMessages(root) {
+    const list = root?.querySelector?.("[data-ai-chat-messages]");
+    if (!list) return;
+    list.innerHTML = state._assistantMessages
+      .map(
+        (message) => `
+          <div class="ai-chat-message ai-chat-message--${message.role === "user" ? "user" : "assistant"}">
+            ${escapeHtml(message.content)}
+          </div>
+        `
+      )
+      .join("");
+    list.scrollTop = list.scrollHeight;
+  }
+
+  function setAiChatStatus(statusEl, text) {
+    if (!statusEl) return;
+    statusEl.textContent = text || "";
+  }
+
+  function setAiChatLive(root, text, keepVisible, mode = "") {
+    const live = root?.querySelector?.("[data-ai-chat-live]");
+    if (!live) return;
+    live.textContent = text || "";
+    live.hidden = !keepVisible && !text;
+    live.classList.toggle("ai-chat-live--loading", mode === "loading");
+    live.classList.toggle("ai-chat-live--error", mode === "error");
+    if (!keepVisible && text) {
+      window.setTimeout(() => {
+        if (live.textContent === text) live.hidden = true;
+      }, 2200);
+    }
+  }
+
+  function formatAiModelDownloadProgress(progress) {
+    const labels = getAiChatLabels();
+    const rawText = String(progress?.text || "").trim();
+    const percent = typeof progress?.progress === "number" ? Math.max(0, Math.min(100, Math.round(progress.progress * 100))) : null;
+    const cacheMatch = rawText.match(/cache\[(\d+)\/(\d+)\]/i);
+    const fetchedMatch = rawText.match(/([\d.]+\s*(?:KB|MB|GB))\s+fetched/i);
+    const elapsedMatch = rawText.match(/(\d+)\s+secs?\s+elapsed/i);
+    const parts = [labels.downloadingModel || labels.loading];
+    if (cacheMatch) parts.push(`${cacheMatch[1]}/${cacheMatch[2]}`);
+    if (percent !== null) parts.push(`${percent}%`);
+    if (fetchedMatch) parts.push(fetchedMatch[1]);
+    if (elapsedMatch) parts.push(`${elapsedMatch[1]}s`);
+    if (parts.length > 1) return parts.join(" · ");
+    return rawText || labels.downloadPreparing || labels.loading;
+  }
+
+  function isAiModelDownloadError(error) {
+    const message = String(error?.message || error || "").toLowerCase();
+    return (
+      message.includes("cache.add") ||
+      (message.includes("cache") && message.includes("network error")) ||
+      message.includes("failed to fetch") ||
+      message.includes("networkerror") ||
+      (message.includes("model") && message.includes("download"))
+    );
+  }
+
+  async function detectAiChatRuntime(root) {
+    const chip = root?.querySelector?.("[data-ai-chip-webgpu]");
+    if (!navigator.gpu) {
+      state._assistantTech.webgpu = "nicht verfügbar";
+      state._assistantTech.adapter = "kein WebGPU-Adapter";
+      if (chip) chip.textContent = "WebGPU fehlt";
+      renderAiChatTechInfo(root);
+      return;
+    }
+
+    state._assistantTech.webgpu = "verfügbar";
+    if (chip) chip.textContent = "WebGPU aktiv";
+    try {
+      const adapter = await navigator.gpu.requestAdapter();
+      const info = adapter?.info || {};
+      const adapterName = [info.vendor, info.architecture || info.device, info.description]
+        .filter(Boolean)
+        .join(" / ");
+      state._assistantTech.adapter = adapterName || (adapter ? "Adapter erkannt" : "kein Adapter erkannt");
+    } catch (error) {
+      state._assistantTech.adapter = "Adapterdetails blockiert";
+      state._assistantTech.lastError = error?.message || String(error || "Adapterfehler");
+    }
+    renderAiChatTechInfo(root);
+  }
+
+  function renderAiChatTechInfo(root) {
+    const list = root?.querySelector?.("[data-ai-chat-tech]");
+    if (!list) return;
+    const labels = getAiChatLabels();
+    const tech = state._assistantTech;
+    const rows = [
+      [labels.techModel, tech.model],
+      [labels.techRuntime, tech.runtime],
+      [labels.techWebgpu, tech.webgpu],
+      [labels.techAdapter, tech.adapter],
+      [labels.techProgress, tech.progress],
+      [labels.techDownloadProgress, tech.downloadProgress || "-"],
+      [labels.techCacheBackend, state._assistantSettings.cacheBackend || "indexeddb"],
+      [labels.techLoadMs, formatMs(tech.loadMs)],
+      [labels.techLastLatencyMs, formatMs(tech.lastLatencyMs)],
+      [labels.techLastPromptChars, `${tech.lastPromptChars} ${labels.chars}`],
+      [labels.techLastContextChars, `${tech.lastContextChars} ${labels.chars}`],
+      [labels.techContextStatus, tech.contextStatus || labels.contextNotLoaded],
+      [labels.techFallback, tech.fallback ? labels.active : labels.inactive],
+      [labels.techLastError, tech.lastError || "-"]
+    ];
+    list.innerHTML = rows
+      .map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value || "-")}</dd></div>`)
+      .join("");
+  }
+
+  function renderAiChatDebugData(root) {
+    const pre = root?.querySelector?.("[data-ai-chat-debug-data]");
+    if (!pre) return;
+    const labels = getAiChatLabels();
+    const data = state._assistantContextData?.lang === state.lang ? state._assistantContextData : null;
+    if (!data) {
+      pre.textContent = labels.debugNotReady || "";
+      return;
+    }
+    pre.textContent = JSON.stringify(
+      {
+        language: state.lang,
+        model: state._assistantSettings.model,
+        settings: {
+          temperature: state._assistantSettings.temperature,
+          maxTokens: state._assistantSettings.maxTokens,
+          contextChars: state._assistantSettings.contextChars,
+          useFallback: state._assistantSettings.useFallback
+        },
+        context: {
+          builtAt: data.builtAt,
+          chars: data.context.length,
+          events: data.events.length,
+          posts: data.posts.length,
+          preview: data.context.slice(0, 1800)
+        },
+        runtime: state._assistantTech,
+        lastMessages: state._assistantMessages.slice(-6)
+      },
+      null,
+      2
+    );
+  }
+
+  function formatMs(value) {
+    if (!Number.isFinite(value)) return "-";
+    if (value < 1000) return `${Math.round(value)} ms`;
+    return `${(value / 1000).toFixed(1)} s`;
+  }
+
+  function buildLocalContextFallbackAnswer(question, events, posts) {
+    const labels = getAiChatLabels();
+    const query = normalizeSearchText(question);
+    const intentAnswer = buildIntentFallbackAnswer(query, events, posts);
+    if (intentAnswer) return `${labels.fallback}\n\n${intentAnswer}`;
+
+    const candidates = [];
+    const home = state._homePageContent || {};
+    candidates.push({
+      title: pickLocalized(home.heroTitle) || "KI Netzwerk Schweinfurt",
+      text: [pickLocalized(home.heroText), pickLocalized(home.missionIntro)].filter(Boolean).join(" ")
+    });
+    (Array.isArray(events) ? sortEventsForList(events) : []).forEach((event) => {
+      candidates.push({
+        title: event.title,
+        text: [event.description, event.addressPlain, event.date ? formatDate(event.date) : "", event.link]
+          .filter(Boolean)
+          .join(" ")
+      });
+    });
+    (Array.isArray(posts) ? posts : []).forEach((post) => {
+      candidates.push({
+        title: post.title,
+        text: [post.teaser, post.date ? formatDate(post.date) : ""].filter(Boolean).join(" ")
+      });
+    });
+
+    const best = candidates
+      .map((candidate) => ({
+        ...candidate,
+        score: scoreSearchCandidate(query, `${candidate.title} ${candidate.text}`)
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .filter((candidate) => candidate.score > 0 || query.length < 3);
+
+    if (!best.length) {
+      return `${labels.fallback}\n\n${buildGeneralFallbackAnswer(events, posts)}`;
+    }
+
+    const bullets = best.map((candidate) => `- ${candidate.title}: ${candidate.text}`).join("\n");
+    return `${labels.fallback}\n\nDas passt am besten zu deiner Frage:\n${bullets}`;
+  }
+
+  function buildIntentFallbackAnswer(query, events, posts) {
+    const eventWords = ["event", "termin", "wann", "treffen", "workshop", "veranstaltung", "naechste", "nächste"];
+    const joinWords = ["mitmachen", "teilnehmen", "kontakt", "speaker", "partner", "unterstuetzen", "unterstützen"];
+    const topicWords = ["thema", "themen", "ki", "comfyui", "automatisierung", "agentur", "agentisch", "praxis"];
+    const aboutWords = ["was", "wer", "netzwerk", "initiative", "schweinfurt", "mainfranken"];
+
+    if (matchesAny(query, eventWords)) {
+      const next = getNextFallbackEvent(events);
+      if (!next) return "Aktuell sind in den Website-Daten keine kommenden Events hinterlegt.";
+      return [
+        `Das nächste Event ist: ${next.title}.`,
+        next.date ? `Termin: ${formatDate(next.date)}.` : "",
+        next.addressPlain ? `Ort: ${next.addressPlain}.` : "",
+        next.description ? `Kurzbeschreibung: ${next.description}` : "",
+        next.link ? `Anmeldung: ${next.link}` : ""
+      ]
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    if (matchesAny(query, joinWords)) {
+      return "Du kannst mitmachen, ein Thema einbringen oder als Partner unterstützen. Am besten meldest du dich per E-Mail unter ki.netzwerk.schweinfurt@gmail.com.";
+    }
+
+    if (matchesAny(query, topicWords)) {
+      const event = getNextFallbackEvent(events);
+      const eventTopic = event?.description ? ` Beim nächsten Event geht es um: ${event.description}` : "";
+      return `Das Netzwerk fokussiert praxisnahe KI-Anwendungen, reale Use Cases, moderne KI-Technologien, agentische Systeme, Automatisierung und Wissensaustausch in der Region.${eventTopic}`;
+    }
+
+    if (matchesAny(query, aboutWords)) {
+      return buildGeneralFallbackAnswer(events, posts);
+    }
+
+    return "";
+  }
+
+  function buildGeneralFallbackAnswer(events, posts) {
+    const home = state._homePageContent || {};
+    const next = getNextFallbackEvent(events);
+    const latestPost = Array.isArray(posts) ? posts[0] : null;
+    return [
+      pickLocalized(home.heroText) ||
+        "Das KI Netzwerk Schweinfurt schafft einen offenen Austauschraum für angewandte Künstliche Intelligenz in der Region.",
+      next ? `Nächstes Event: ${next.title}${next.date ? ` am ${formatDate(next.date)}` : ""}.` : "",
+      latestPost ? `Aktueller Rückblick/Beitrag: ${latestPost.title}.` : "",
+      "Kontakt: ki.netzwerk.schweinfurt@gmail.com."
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  function getNextFallbackEvent(events) {
+    const list = Array.isArray(events) ? sortEventsForList(events) : [];
+    return list.find((event) => !isEventPast(event)) || list[0] || null;
+  }
+
+  function matchesAny(query, words) {
+    return words.some((word) => query.includes(normalizeSearchText(word)));
+  }
+
+  function normalizeSearchText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9äöüß\s.-]/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function scoreSearchCandidate(query, text) {
+    const haystack = normalizeSearchText(text);
+    return query
+      .split(" ")
+      .filter((word) => word.length >= 3)
+      .reduce((score, word) => score + (haystack.includes(word) ? 1 : 0), 0);
+  }
+
+  function buildAiAssistantSystemPrompt(events, posts) {
+    const languageName = state.lang === "en" ? "English" : "German";
+    const context = buildAiAssistantContext(events, posts);
+    return [
+      `You are the helpful website assistant for "KI Netzwerk Schweinfurt". Answer in ${languageName}.`,
+      "Use only the provided website context. If information is missing, say that the website does not contain it and suggest contacting ki.netzwerk.schweinfurt@gmail.com.",
+      "Keep answers concise, friendly and practical. Do not invent dates, locations or links.",
+      "",
+      "Website context:",
+      context
+    ].join("\n");
+  }
+
+  function buildAiAssistantContext(events, posts) {
+    const home = state._homePageContent || {};
+    const faq = state._globalData?.[state.lang]?.faq || state._globalData?.de?.faq || {};
+    const sponsors = Array.isArray(home.sponsors)
+      ? home.sponsors.map((s) => `${s.name || ""}${s.link ? ` (${s.link})` : ""}`).filter(Boolean)
+      : [];
+    const features = [1, 2, 3, 4]
+      .map((index) =>
+        [
+          pickLocalized(home[`feature${index}Title`]),
+          pickLocalized(home[`feature${index}Text`])
+        ]
+          .filter(Boolean)
+          .join(": ")
+      )
+      .filter(Boolean);
+    const eventLines = (Array.isArray(events) ? sortEventsForList(events) : [])
+      .slice(0, 6)
+      .map((event) =>
+        [
+          event.title,
+          event.date ? formatDate(event.date) : "",
+          event.addressPlain || "",
+          event.description || "",
+          event.link ? `Anmeldung/Link: ${event.link}` : ""
+        ]
+          .filter(Boolean)
+          .join(" | ")
+      );
+    const postLines = (Array.isArray(posts) ? posts : []).slice(0, 4).map((post) =>
+      [
+        post.title,
+        post.date ? formatDate(post.date) : "",
+        post.teaser || "",
+        post.slug ? `URL: ./blog.html?post=${post.slug}` : ""
+      ]
+        .filter(Boolean)
+        .join(" | ")
+    );
+    const faqLines = Object.values(faq)
+      .map((item) => `${item.question || ""} ${item.answer || ""}`.trim())
+      .filter(Boolean);
+
+    return [
+      `Name: ${pickLocalized(home.heroTitle) || "KI Netzwerk Schweinfurt"}`,
+      `Kurzbeschreibung: ${pickLocalized(home.heroText)}`,
+      `Mission: ${pickLocalized(home.missionTitle)} - ${pickLocalized(home.missionIntro)}`,
+      `Schwerpunkte: ${features.join("; ")}`,
+      `Sponsoren/Partner: ${sponsors.join("; ") || "keine Angabe"}`,
+      `Kontakt: ki.netzwerk.schweinfurt@gmail.com`,
+      `Events: ${eventLines.join("\n- ") || "keine Events gefunden"}`,
+      `Blog/Rueckblicke: ${postLines.join("\n- ") || "keine Blogbeitraege gefunden"}`,
+      `FAQ: ${faqLines.join(" | ")}`
+    ]
+      .join("\n")
+      .slice(0, Number(state._assistantSettings.contextChars) || 5200);
+  }
+
+  function pickLocalized(value) {
+    if (!value || typeof value !== "object") return typeof value === "string" ? value : "";
+    return value[state.lang] || value.de || "";
   }
 
   function renderHomeSponsors() {

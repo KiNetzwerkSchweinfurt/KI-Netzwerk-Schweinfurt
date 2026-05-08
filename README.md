@@ -2,7 +2,7 @@
 
 Offizielle **statische Website** des KI Netzwerks Schweinfurt — Vernetzung von Unternehmen, Bildung, Verwaltung und Community rund um praxisnahe KI in der Region Mainfranken.
 
-Die Inhalte (Events, Blogbeiträge, Seitentexte, UI-Strings) liegen ausschließlich in **JSON-Dateien** unter `data/`, ergänzt durch **Markdown-Dateien** für längere Detailtexte (Event-Detail, Blog-Artikel). Die Pflege erfolgt durch Bearbeiten dieser Dateien — **kein Build-Tool, keine Datenbank, kein Server**.
+Die Inhalte (Events, Blogbeiträge, Seitentexte, UI-Strings) liegen in **JSON-Dateien** unter `data/`; zusätzlich steuert **`data/global/ai-chat.json`** den lokalen **WebLLM**-Assistenten (Modelle, Texte, CDN-URLs). Längere Detailtexte liegen in **Markdown** (Event-Detail, Blog-Artikel). Die Pflege erfolgt durch Bearbeiten dieser Dateien — **kein Build-Tool, keine Datenbank, kein Anwendungs-Server** (WebLLM läuft rein im Browser des Besuchers).
 
 | | |
 |--|--|
@@ -30,8 +30,9 @@ Die Inhalte (Events, Blogbeiträge, Seitentexte, UI-Strings) liegen ausschließl
 12. [Schema: About-Seite (Initiatoren & Partner)](#schema-about-seite-initiatoren--partner)
 13. [Schema: Home-Seite (Sponsoren)](#schema-home-seite-sponsoren)
 14. [Bilder & Medien](#bilder--medien)
-15. [Konventionen](#konventionen)
-16. [Deployment](#deployment)
+15. [Lokaler KI-Assistent (WebLLM)](#lokaler-ki-assistent-webllm)
+16. [Konventionen](#konventionen)
+17. [Deployment](#deployment)
 
 ---
 
@@ -61,13 +62,15 @@ Im Browser öffnen: `http://localhost:8000` — Einstieg über `index.html`.
 - **Karten-Einbettung** — Events mit `geo.lat` / `geo.lng` zeigen eine OpenStreetMap-/Google-Maps-Vorschau plus Direktlinks für Google Maps und Apple Maps.
 - **Animationen** — dezentes „Netzwerk“-Canvas in Header und Hero (`<canvas id="header-network-canvas">`, `<canvas id="network-canvas">`); Scroll-Reveal über `.fade-in`.
 - **FAQ-Akkordeon** — barrierefrei (`aria-expanded`, Tastaturbedienung).
+- **Lokaler KI-Chat (WebLLM)** — schwebender Assistent (`components/ai-chat.html`), lädt [`@mlc-ai/web-llm`](https://github.com/mlc-ai/web-llm) zur Laufzeit per ES-Module (CDN-URLs konfigurierbar in `data/global/ai-chat.json`). Inferenz erfolgt über **WebGPU** im Browser; Chat-Inhalte verlassen die Seite nicht. Siehe Abschnitt [Lokaler KI-Assistent (WebLLM)](#lokaler-ki-assistent-webllm).
 
 **Lade-Flow** (vereinfacht, in `assets/js/main.js`):
 
-1. Header- & Footer-Partial laden, Theme & Sprache initialisieren.
-2. Globale UI-Strings (`data/global/global.json`) und Seiten-JSON (`home/`, `events/`, `blog/`, `about/`) laden.
+1. Header-, Footer- und AI-Chat-Partial laden, Theme & Sprache initialisieren.
+2. Globale UI-Strings (`data/global/global.json`), **KI-Chat-Konfiguration** (`data/global/ai-chat.json`) und Seiten-JSON (`home/`, `events/`, `blog/`, `about/`) laden.
 3. Event- & Blog-Listen aus `data/event/index.json` bzw. `data/blog/index.json` lesen, anschließend die einzelnen Einträge nachladen.
 4. Markdown-Inhalte werden **on-demand** beim Öffnen der Detailseite geladen.
+5. Auf jeder Seite: KI-Assistent initialisieren (Einstellungen aus `localStorage`, optional WebLLM-Engine beim ersten Prompt).
 
 ---
 
@@ -86,7 +89,7 @@ KI-Netzwerk-Schweinfurt-main/
 │   ├── css/
 │   │   └── styles.css        # Designsystem, Layout, Light-/Dark-Theme, Cards, Hero, Karten
 │   ├── js/
-│   │   └── main.js           # Komplette App-Logik (Daten, i18n, Theme, Cards, Markdown, Maps, Countdown)
+│   │   └── main.js           # App-Logik: Daten, i18n, Theme, Cards, Markdown, Maps, Countdown, WebLLM-Chat
 │   └── images/               # Fotos & Logos
 │       ├── meeting1.png
 │       ├── meeting2.png
@@ -98,11 +101,13 @@ KI-Netzwerk-Schweinfurt-main/
 │   ├── header.html           # Site-Header mit Navigation, Sprach- & Theme-Toggle, Burger-Menü
 │   ├── footer.html           # Site-Footer (Copyright, Links, Kontakt)
 │   ├── event-card.html       # Template für Event-Karten (Listen, Home)
-│   └── blog-card.html        # Template für Blog-Karten (Listen, Home)
+│   ├── blog-card.html        # Template für Blog-Karten (Listen, Home)
+│   └── ai-chat.html          # UI des lokalen WebLLM-Assistenten (Toggle, Einstellungen, Verlauf)
 │
 └── data/
     ├── global/
-    │   └── global.json                       # Globale UI-Strings (Nav, Footer, FAQ, Theme, Common, Countdown)
+    │   ├── global.json                       # Globale UI-Strings (Nav, Footer, FAQ, Theme, Common, Countdown)
+    │   └── ai-chat.json                      # WebLLM: Modelle, CDN-URLs, Defaults, Chat-Labels (DE/EN)
     │
     ├── home/
     │   └── home-page.json                    # Startseiten-Inhalte (Hero, Mission, Sponsoren, FAQ-Labels, CTA)
@@ -145,6 +150,7 @@ KI-Netzwerk-Schweinfurt-main/
 | Bereich | Pfad | Zweck |
 |--------|------|--------|
 | **Globale UI-Strings** | `data/global/global.json` | Navigation, Footer, FAQ-Texte, Theme-Labels, Common (Buttons, Loading…), Countdown |
+| **KI-Chat / WebLLM** | `data/global/ai-chat.json` | Modell-Katalog (`models`), ES-Import-URLs (`webLlmModuleUrls`), Standardeinstellungen (`defaultSettings`), alle Chat-Strings DE/EN (`labels`) |
 | **Startseite** | `data/home/home-page.json` | Hero, Sektions-Eyebrows, Mission-Features, Sponsoren-Liste, CTA |
 | **Über uns** | `data/about/about-page.json` | Hero, Treffenbeschreibung, Teilnehmer- & Partner-Chips, Partner-Logos, Initiatoren mit Bio |
 | **Event-Liste** | `data/event/index.json` | Reihenfolge & Auswahl der angezeigten Events (`files: [...]`) |
@@ -374,6 +380,39 @@ Ablage: alle Karten- und Beitragsbilder unter `assets/images/` (Pfad in JSON: `"
 
 ---
 
+## Lokaler KI-Assistent (WebLLM)
+
+Die Website bindet einen **schwebenden Chat** ein (Partial `components/ai-chat.html`), der auf **allen Seiten** nach dem Laden von `assets/js/main.js` aktiv wird. Technisch basiert die KI-Antwort auf **[WebLLM](https://webllm.mlc.ai/)** ([Paket `@mlc-ai/web-llm`](https://www.npmjs.com/package/@mlc-ai/web-llm)): Das Sprachmodell wird im Browser geladen und mit **WebGPU** ausgeführt — **ohne** dass Nutzerfragen oder Antworten an einen eigenen Server des Projekts gesendet werden. (Der Browser lädt Modell-Gewichte und die WebLLM-Bibliothek von den konfigurierten CDNs.)
+
+### Ablauf in Kurzform
+
+1. **`data/global/ai-chat.json`** wird mit den übrigen globalen Daten geladen: Labels (DE/EN), Liste der Modell-IDs (`models`), Standardwerte für Temperatur, Token-Länge, Kontextgröße usw. (`defaultSettings`), sowie **`webLlmModuleUrls`** — mehrere URLs, die nacheinander versucht werden, falls ein CDN blockiert oder ausfällt.
+2. Beim ersten Senden einer Nachricht importiert der Code dynamisch das WebLLM-Modul (`importWebLlmModule` in `assets/js/main.js`), erzeugt eine **`MLCEngine`** mit dem gewählten Modell und dem Cache-Backend (**IndexedDB** oder **Cache API**, wählbar in den Chat-Einstellungen).
+3. **Website-Kontext:** Vor der Antwort werden aus den bereits geladenen Seitendaten ein kompakter Text aufgebaut (`buildAiAssistantContext`): Startseite (Hero, Mission-Features, Sponsoren), FAQ-Auszug, die **nächsten sechs** Events (Sortierung wie in der Liste) und **vier** Blog-Teaser inkl. Slug — alles auf die Zeichenzahl **`contextChars`** (Standard in JSON, per UI anpassbar) begrenzt. Dieser Text steckt im **System-Prompt**; das Modell wird angewiesen, nur diesen Kontext zu nutzen und nichts zu erfinden.
+4. **Antwort:** Es wird mit Streaming gearbeitet (bei Fehler einmaliger Versuch ohne Stream). **Abbrechen** unterbricht die Generierung (`interruptGenerate`).
+
+### Fallback ohne funktionierendes WebLLM
+
+Wenn WebGPU fehlt, der Modul-Import scheitert oder das Modell nicht geladen werden kann, greift optional der **lokale Fallback** (Schalter *„Lokalen Fallback nutzen“*, `useFallback` in `defaultSettings` / `localStorage`):
+
+- Es wird **kein** großes Sprachmodell ausgeführt, sondern eine **reine JavaScript-„Kontextsuche“** über dieselben Daten, die auch für den Chat-Kontext genutzt werden.
+- **`buildIntentFallbackAnswer`** erkennt grob die **Absicht** anhand deutscher/englischer **Schlüsselwörter** in der Nutzerfrage (z. B. Event/Treffen/Wann → nächstes Event; Mitmachen/Kontakt → E-Mail-Hinweis; Themen/KI → kurzer Netzwerk-Fokustext mit optionalem Bezug zum nächsten Event; wer/was/Netzwerk → allgemeiner Kurzüberblick).
+- Passt keine Intent-Route, durchsucht **`buildLocalContextFallbackAnswer`** eine **Kandidatenliste**: Hero- und Missionstext der Startseite, danach jedes Event und jeder Blogeintrag mit Titel sowie zusammengefasstem Fließtext (für Events z. B. Beschreibung, Adresse, Datum, Link; für Posts Teaser und Datum). Die Frage wird **normalisiert** (Kleinbuchstaben, Umlaute entflochten, Sonderzeichen reduziert) und mit **`scoreSearchCandidate`** bewertet: Wörter mit mindestens **drei Buchstaben** aus der Frage werden im Text gezählt; die **drei besten Treffer** werden als Antwortvorschläge ausgegeben, sonst eine **Standardzusammenfassung** (Hero, nächstes Event, neuester Blog, Kontakt).
+
+Das ist keine semantische Vektorsuche, sondern ein **leichgewichtiger Scanner** über strukturierte Website-Inhalte — absichtlich ohne Backend und ohne Embedding-API.
+
+### Nutzer-Einstellungen & Pflege
+
+| Thema | Ort / Verhalten |
+|--------|-------------------|
+| **Persistenz** | `localStorage`-Schlüssel `kins-ai-chat-settings` (Modell, Schieberegler, Checkboxen, Akzentfarbe) |
+| **Texte / Modelle / CDNs** | `data/global/ai-chat.json` — `_meta` wie bei anderen JSONs; Änderungen an `labels`, `models`, `webLlmModuleUrls`, `defaultSettings` |
+| **Zuverlässigkeit** | Aktuellen **Chrome-, Edge- oder Safari** mit WebGPU über **HTTPS** oder **localhost** verwenden (siehe Hinweistexte in `labels`); bei Cache-Problemen **IndexedDB** als Cache-Speicher wählen |
+
+**Dateien:** `components/ai-chat.html` (Markup), Styles in `assets/css/styles.css` (Klassen `ai-chat*`), gesamte Logik in `assets/js/main.js` (Funktionen `initAiChatAssistant`, `ensureAiAssistantEngine`, `buildAiAssistantContext`, `buildLocalContextFallbackAnswer`, …).
+
+---
+
 ## Konventionen
 
 - **Keine doppelten** `id` (Events) bzw. `id` / `slug` (Blog).
@@ -396,10 +435,11 @@ Die Seite ist eine **reine Static-Site** und benötigt keinen Server. Geeignet s
 
 Vor dem Deployment empfiehlt sich:
 
-1. JSON-Validität prüfen (z. B. `python3 -m json.tool data/event/index.json`).
+1. JSON-Validität prüfen (z. B. `python3 -m json.tool data/event/index.json` und `data/global/ai-chat.json`).
 2. Lokal mit `python3 -m http.server` testen, sowohl in DE als auch EN.
 3. Bilder optimieren (Größe, Format).
 4. `index.json` (Events & Blog) auf die korrekte Reihenfolge prüfen.
+5. **KI-Chat:** Auf der Ziel-URL mit **HTTPS** testen (WebGPU ist dort zuverlässiger als bei beliebigen `http://`-Hosts); prüfen, ob die CDNs unter `webLlmModuleUrls` erreichbar sind.
 
 ---
 
