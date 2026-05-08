@@ -15,6 +15,7 @@
   - 02.05.2026  [Oliver Braun]   Project initialization
   - 08.05.2026  [Oliver Braun]   Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling.
   - 08.05.2026  [Oliver Braun]   Add local WebLLM chat assistant.
+  - 09.05.2026  [Oliver Braun]   Markdown rendering and mobile UX polish.
 
 
   Independently developed by me.
@@ -53,6 +54,8 @@
     _assistantBusy: false,
     _assistantCancelRequested: false,
     _assistantRunId: 0,
+    /** @type {null | (() => void)} */
+    _aiChatViewportUnbind: null,
     _assistantSettings: { ...FALLBACK_AI_CHAT_SETTINGS },
     _assistantTech: {
       model: AI_ASSISTANT_MODEL,
@@ -77,6 +80,7 @@
 
   async function init() {
     console.log("Init started");
+    ensureMarkdownParser();
     await loadBaseLayout();
     console.log("Base layout loaded");
     initTheme();
@@ -514,7 +518,59 @@
     initNetworkAnimation();
   }
 
+  /** Mobil: Chat an den unteren sichtbaren Rand (über der Tastatur) ausrichten. */
+  function syncAiChatVisualInsets(chatEl) {
+    if (!chatEl) return;
+    const vv = window.visualViewport;
+    if (!vv) {
+      chatEl.style.removeProperty("--ai-chat-keyboard-gap");
+      chatEl.style.removeProperty("--ai-chat-vvh");
+      chatEl.style.removeProperty("--ai-chat-bottom-extra");
+      return;
+    }
+    const gap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    chatEl.style.setProperty("--ai-chat-keyboard-gap", `${gap}px`);
+    chatEl.style.setProperty("--ai-chat-vvh", `${Math.max(0, Math.round(vv.height))}px`);
+    if (gap > 56) {
+      chatEl.style.setProperty("--ai-chat-bottom-extra", "0px");
+    } else {
+      chatEl.style.removeProperty("--ai-chat-bottom-extra");
+    }
+  }
+
+  function bindAiChatVisualViewport(chatEl) {
+    const update = () => syncAiChatVisualInsets(chatEl);
+    update();
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener("resize", update);
+      vv.addEventListener("scroll", update);
+    }
+    window.addEventListener("resize", update);
+    return () => {
+      if (vv) {
+        vv.removeEventListener("resize", update);
+        vv.removeEventListener("scroll", update);
+      }
+      window.removeEventListener("resize", update);
+      if (chatEl) {
+        chatEl.style.removeProperty("--ai-chat-keyboard-gap");
+        chatEl.style.removeProperty("--ai-chat-vvh");
+        chatEl.style.removeProperty("--ai-chat-bottom-extra");
+      }
+    };
+  }
+
   async function initAiChatAssistant() {
+    if (typeof state._aiChatViewportUnbind === "function") {
+      try {
+        state._aiChatViewportUnbind();
+      } catch (_) {
+        /* ignore */
+      }
+      state._aiChatViewportUnbind = null;
+    }
+
     let root = document.getElementById("ai-chat-root");
     if (!root) {
       root = document.createElement("div");
@@ -545,6 +601,7 @@
     const input = root.querySelector("#ai-chat-input");
     const status = root.querySelector("[data-ai-chat-status]");
     const submit = root.querySelector(".ai-chat-form button[type='submit']");
+    state._aiChatViewportUnbind = bindAiChatVisualViewport(chat);
     applyAiChatLabels(root, labels);
     renderAiChatModelOptions(root);
 
@@ -572,7 +629,12 @@
         settingsPanel.setAttribute("aria-hidden", "true");
         settingsToggle?.setAttribute("aria-expanded", "false");
       }
-      if (open) window.setTimeout(() => input?.focus(), 0);
+      if (open) {
+        window.setTimeout(() => {
+          input?.focus();
+          syncAiChatVisualInsets(chat);
+        }, 0);
+      }
     };
 
     applyAiChatSettings(root);
@@ -616,6 +678,12 @@
       cancelAiChatRun(root);
     });
     input?.addEventListener("input", () => resizeAiChatInput(input));
+    input?.addEventListener("focus", () => {
+      window.requestAnimationFrame(() => {
+        syncAiChatVisualInsets(chat);
+        window.setTimeout(() => syncAiChatVisualInsets(chat), 280);
+      });
+    });
     resizeAiChatInput(input);
 
     renderAiChatMessages(root);
@@ -2291,8 +2359,8 @@
     if (bodyEl) {
       const extra = event.content || "";
       if (extra.trim()) {
-        bodyEl.innerHTML = markdownToHtml(extra.trim());
         bodyEl.classList.remove("hidden");
+        renderMarkdownInto(bodyEl, extra.trim());
       } else {
         bodyEl.innerHTML = "";
         bodyEl.classList.add("hidden");
@@ -2476,7 +2544,10 @@
     } else {
       imageEl.classList.add("hidden");
     }
-    document.getElementById("blog-detail-content").innerHTML = markdownToHtml((post.content || "").trim());
+    await renderMarkdownInto(
+      document.getElementById("blog-detail-content"),
+      (post.content || "").trim()
+    );
   }
 
   async function loadEventEntries() {
@@ -2520,28 +2591,151 @@
   async function ensureMarkdownParser() {
     if (state._markdownParser) return state._markdownParser;
     if (state._markdownReadyPromise) return state._markdownReadyPromise;
+
+    const bindMarkedParse = (parseFn) => {
+      if (typeof parseFn !== "function") return null;
+      return (src) => parseFn(String(src || ""), { async: false, gfm: true, breaks: false });
+    };
+
     if (window.marked?.parse) {
-      state._markdownParser = window.marked.parse.bind(window.marked);
+      state._markdownParser = bindMarkedParse(window.marked.parse.bind(window.marked));
       return state._markdownParser;
     }
-    state._markdownReadyPromise = import("https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js")
-      .then((mod) => {
-        const parser = mod?.marked?.parse;
-        if (typeof parser === "function") {
-          state._markdownParser = parser.bind(mod.marked);
-          return state._markdownParser;
+
+    const tryImportMarked = async (specifier) => {
+      const mod = await import(/* webpackIgnore: true */ specifier);
+      const parseFn = mod?.marked?.parse;
+      return bindMarkedParse(parseFn ? parseFn.bind(mod.marked) : null);
+    };
+
+    const localSpecifier = new URL("./assets/js/vendor/marked.esm.js", document.baseURI).href;
+    const cdnSpecifier = "https://cdn.jsdelivr.net/npm/marked@15.0.7/lib/marked.esm.js";
+
+    state._markdownReadyPromise = (async () => {
+      try {
+        const parser = await tryImportMarked(localSpecifier);
+        if (parser) {
+          state._markdownParser = parser;
+          return parser;
         }
-        throw new Error("No markdown parser available");
-      })
-      .catch((err) => {
-        console.warn("Markdown library could not be loaded:", err);
-        state._markdownParser = null;
-        return state._markdownParser;
-      })
-      .finally(() => {
-        state._markdownReadyPromise = null;
-      });
+      } catch (err) {
+        console.warn("Markdown (lokal): konnte nicht geladen werden:", err);
+      }
+      try {
+        const parser = await tryImportMarked(cdnSpecifier);
+        if (parser) {
+          state._markdownParser = parser;
+          return parser;
+        }
+      } catch (err) {
+        console.warn("Markdown (CDN): konnte nicht geladen werden:", err);
+      }
+      state._markdownParser = null;
+      return null;
+    })().finally(() => {
+      state._markdownReadyPromise = null;
+    });
+
     return state._markdownReadyPromise;
+  }
+
+  /** Minimaler Markdown→HTML-Fallback (ohne externes Paket), wenn Import/CND blockiert ist. */
+  function simpleMarkdownToHtml(markdown) {
+    const esc = (s) =>
+      String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    const sanitizeHref = (href) => {
+      const h = String(href || "").trim();
+      if (!h || /^javascript:/i.test(h) || /^vbscript:/i.test(h) || /^data:/i.test(h)) return "";
+      if (/^https?:\/\//i.test(h) || /^mailto:/i.test(h)) return esc(h.replace(/"/g, ""));
+      if (h.startsWith("/") || h.startsWith("./") || h.startsWith("../")) return esc(h.replace(/"/g, ""));
+      return "";
+    };
+    const formatInline = (chunk) => {
+      const codes = [];
+      const links = [];
+      let t = String(chunk);
+      t = t.replace(/`([^`]+)`/g, (_, code) => {
+        const id = codes.length;
+        codes.push("<code>" + esc(code) + "</code>");
+        return `@@CODEPH${id}@@`;
+      });
+      t = t.replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, (full, label, href) => {
+        const safe = sanitizeHref(href);
+        if (!safe) return full;
+        const id = links.length;
+        links.push('<a href="' + safe + '" target="_blank" rel="noopener noreferrer">' + esc(label) + "</a>");
+        return `@@LINKPH${id}@@`;
+      });
+      t = esc(t);
+      t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      t = t.replace(/__([^_]+)__/g, "<strong>$1</strong>");
+      t = t.replace(/~~([^~]+)~~/g, "<del>$1</del>");
+      t = t.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+      t = t.replace(/(^|[^_])_([^_]+)_(?!_)/g, "$1<em>$2</em>");
+      t = t.replace(/@@CODEPH(\d+)@@/g, (_, i) => codes[Number(i)] ?? "");
+      t = t.replace(/@@LINKPH(\d+)@@/g, (_, i) => links[Number(i)] ?? "");
+      return t;
+    };
+
+    let text = String(markdown || "").replace(/\r\n/g, "\n");
+    const fences = [];
+    text = text.replace(/```[^\n]*\n([\s\S]*?)```/gm, (_, body) => {
+      const id = fences.length;
+      fences.push("<pre><code>" + esc(body.replace(/\n$/, "")) + "</code></pre>");
+      return `\n\n@@FENCE${id}@@\n\n`;
+    });
+
+    const segments = text.split(/\n{2,}/);
+    const blocks = [];
+    for (let seg of segments) {
+      seg = seg.trim();
+      if (!seg) continue;
+      const fm = seg.match(/^@@FENCE(\d+)@@$/);
+      if (fm) {
+        blocks.push(fences[Number(fm[1])] ?? "");
+        continue;
+      }
+      const lines = seg.split("\n");
+      if (lines.length === 1 && /^[-*_]{3,}\s*$/.test(lines[0])) {
+        blocks.push("<hr>");
+        continue;
+      }
+      const hm = lines[0].match(/^(#{1,6})\s+(.+)$/);
+      if (hm && lines.length === 1) {
+        const depth = hm[1].length;
+        blocks.push("<h" + depth + ">" + formatInline(hm[2].trim()) + "</h" + depth + ">");
+        continue;
+      }
+      if (lines.every((ln) => /^\s*[-*]\s|^\s*$/.test(ln))) {
+        const items = lines
+          .filter((ln) => ln.trim())
+          .map((ln) => "<li>" + formatInline(ln.replace(/^\s*[-*]\s+/, "").trim()) + "</li>")
+          .join("");
+        blocks.push("<ul>" + items + "</ul>");
+        continue;
+      }
+      if (lines.every((ln) => /^\s*\d+\.\s|^\s*$/.test(ln))) {
+        const items = lines
+          .filter((ln) => ln.trim())
+          .map((ln) => "<li>" + formatInline(ln.replace(/^\s*\d+\.\s+/, "").trim()) + "</li>")
+          .join("");
+        blocks.push("<ol>" + items + "</ol>");
+        continue;
+      }
+      if (lines.every((ln) => /^\s*>|^\s*$/.test(ln))) {
+        const inner = lines
+          .filter((ln) => ln.trim())
+          .map((ln) => ln.replace(/^\s*>\s?/, ""))
+          .join("\n");
+        blocks.push("<blockquote><p>" + formatInline(inner) + "</p></blockquote>");
+        continue;
+      }
+      blocks.push("<p>" + formatInline(lines.join("\n").replace(/\n/g, "<br>\n")) + "</p>");
+    }
+    return blocks.join("\n");
   }
 
   function markdownToHtml(markdown) {
@@ -2549,14 +2743,20 @@
       try {
         return state._markdownParser(String(markdown || ""));
       } catch (err) {
-        console.warn("Markdown parser failed, rendering escaped text:", err);
+        console.warn("Markdown parser failed, using fallback renderer:", err);
       }
     }
-    const escaped = String(markdown || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-    return `<pre>${escaped}</pre>`;
+    return simpleMarkdownToHtml(markdown);
+  }
+
+  async function renderMarkdownInto(el, markdown) {
+    if (!el) return;
+    try {
+      await ensureMarkdownParser();
+    } catch (err) {
+      console.warn("Markdown parser could not be ensured:", err);
+    }
+    el.innerHTML = markdownToHtml(markdown);
   }
 
   function renderTemplate(template, data) {

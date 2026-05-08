@@ -15,6 +15,7 @@
   - 02.05.2026  [Oliver Braun]   Project initialization
   - 08.05.2026  [Oliver Braun]   Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling.
   - 08.05.2026  [Oliver Braun]   Add local WebLLM chat assistant.
+  - 09.05.2026  [Oliver Braun]   Markdown rendering and mobile UX polish.
 
 
   Independently developed by me.
@@ -30,10 +31,18 @@
      4. Komponenten (Buttons, Badges, Inputs, Cards, FAQ, Calendar, ...)
      5. Header / Footer
      6. Seiten (Home, Events, Blog, About, Detail)
-     7. Hilfsklassen / Animationen / Banner
+     7. Markdown-Schicht (.markdown-layer, gleiche Typografie auf allen Geräten)
+     8. Hilfsklassen / Animationen / Banner
    ========================================================================= */
 
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300..800&display=swap");
+
+/* Cascade-Layer-Reihenfolge:
+   - reset:    grundlegende Tag-Defaults (h1-h6, p, img, a, button, ::selection)
+   - markdown: Typografie für gerenderten Markdown-Inhalt (.markdown-layer)
+   Komponenten-/Seiten-Regeln bleiben unlayered und gewinnen damit gegen reset und markdown,
+   während .markdown-layer die generischen Tag-Defaults aus reset zuverlässig überschreibt. */
+@layer reset, markdown;
 
 /* -------------------------------------------------------------------------
    1. Tokens
@@ -180,60 +189,62 @@ body.theme-light {
     linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
 }
 
-img,
-svg,
-canvas {
-  display: block;
-  max-width: 100%;
-}
+@layer reset {
+  img,
+  svg,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-button {
-  font: inherit;
-  color: inherit;
-}
+  button {
+    font: inherit;
+    color: inherit;
+  }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-display);
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  margin: 0;
-  text-wrap: balance;
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
 
-h1 {
-  font-size: clamp(2.2rem, 5.4vw + 0.4rem, 3.6rem);
-  line-height: 1.05;
-  letter-spacing: -0.035em;
-}
+  h1 {
+    font-size: clamp(2.2rem, 5.4vw + 0.4rem, 3.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+  }
 
-h2 {
-  font-size: clamp(1.7rem, 3.6vw + 0.3rem, 2.5rem);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-}
+  h2 {
+    font-size: clamp(1.7rem, 3.6vw + 0.3rem, 2.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
 
-h3 {
-  font-size: clamp(1.15rem, 1.6vw + 0.4rem, 1.4rem);
-  line-height: 1.2;
-}
+  h3 {
+    font-size: clamp(1.15rem, 1.6vw + 0.4rem, 1.4rem);
+    line-height: 1.2;
+  }
 
-p {
-  margin: 0;
-}
+  p {
+    margin: 0;
+  }
 
-::selection {
-  background: var(--color-primary-soft);
-  color: var(--text);
+  ::selection {
+    background: var(--color-primary-soft);
+    color: var(--text);
+  }
 }
 
 /* -------------------------------------------------------------------------
@@ -534,6 +545,13 @@ p {
   position: absolute;
   inset: 0;
   z-index: 1;
+  cursor: pointer;
+}
+
+.card .card-hitbox:focus-visible {
+  outline: 2px solid var(--color-primary-strong);
+  outline-offset: 4px;
+  border-radius: var(--radius-lg);
 }
 
 .card-image {
@@ -553,6 +571,14 @@ p {
   flex: 1;
   gap: var(--space-3);
   padding: clamp(1.1rem, 2.5vw, 1.5rem);
+  /* Klicks (außer auf echten interaktiven Elementen) fallen durch zur .card-hitbox,
+     damit die ganze Karte zur Detailseite verlinkt — nicht nur das Bild. */
+  pointer-events: none;
+}
+
+.card-body :where(a, button, input, select, textarea, label, summary, [role="button"], [tabindex]),
+.card-body .card-actions {
+  pointer-events: auto;
 }
 
 .card-body h3 {
@@ -2538,34 +2564,133 @@ body.theme-light .hero-network-visual {
   line-height: 1.65;
 }
 
-.event-detail-body,
-.markdown-content {
+/* --- Markdown: Cascade-Layer (.markdown-layer), gleiche Typografie auf allen Viewports --- */
+@layer markdown {
+.markdown-layer.markdown-content {
   color: var(--text);
   line-height: 1.7;
+  max-width: 72ch;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  overflow-x: auto;
 }
 
-.markdown-content h1,
-.markdown-content h2,
-.markdown-content h3 {
+.markdown-layer.markdown-content :where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.markdown-layer.markdown-content :where(h1, h2, h3) {
   margin-top: var(--space-5);
+  margin-bottom: var(--space-2);
 }
 
-.markdown-content h1:first-child,
-.markdown-content h2:first-child,
-.markdown-content h3:first-child {
+.markdown-layer.markdown-content :where(h4, h5, h6) {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: 1.05rem;
+}
+
+.markdown-layer.markdown-content :where(h1, h2, h3):first-child {
   margin-top: 0;
 }
 
-.markdown-content p {
+.markdown-layer.markdown-content p {
   margin: 0 0 var(--space-3);
 }
 
-.markdown-content ul {
+.markdown-layer.markdown-content :where(ul, ol) {
   margin: 0 0 var(--space-3);
-  padding-left: 1.2rem;
+  padding-left: 1.35rem;
 }
 
-.markdown-content img {
+.markdown-layer.markdown-content li {
+  margin: 0.25rem 0;
+}
+
+.markdown-layer.markdown-content li > :where(ul, ol) {
+  margin-bottom: 0;
+}
+
+.markdown-layer.markdown-content blockquote {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--color-primary);
+  background: var(--surface-soft);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  color: var(--text-muted);
+}
+
+.markdown-layer.markdown-content blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-layer.markdown-content hr {
+  margin: var(--space-5) 0;
+  border: none;
+  border-top: 1px solid var(--border-strong);
+}
+
+.markdown-layer.markdown-content :where(pre) {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  -webkit-overflow-scrolling: touch;
+}
+
+.markdown-layer.markdown-content pre code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: inherit;
+  background: none;
+  padding: 0;
+  border: none;
+}
+
+.markdown-layer.markdown-content :where(code):not(pre code) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.88em;
+  padding: 0.12em 0.38em;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.markdown-layer.markdown-content table {
+  width: 100%;
+  margin: 0 0 var(--space-4);
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  max-width: 100%;
+}
+
+.markdown-layer.markdown-content :where(th, td) {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-layer.markdown-content th {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.markdown-layer.markdown-content a:not(.btn) {
+  color: var(--color-primary-strong);
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.markdown-layer.markdown-content img {
   display: block;
   max-width: 100%;
   width: auto;
@@ -2573,12 +2698,172 @@ body.theme-light .hero-network-visual {
   max-height: min(62vh, 34rem);
   object-fit: contain;
   margin: var(--space-4) auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
 }
 
-.markdown-content .btn,
-.markdown-content a.btn {
+.markdown-layer.markdown-content .btn,
+.markdown-layer.markdown-content a.btn {
   margin: 0.4rem 0.55rem 0.4rem 0;
 }
+
+.markdown-layer.markdown-content input[type="checkbox"] {
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.markdown-layer.markdown-content :where(strong, b) {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.markdown-layer.markdown-content :where(em, i) {
+  font-style: italic;
+}
+
+.markdown-layer.markdown-content :where(del, s, strike) {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.markdown-layer.markdown-content u {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.markdown-layer.markdown-content mark {
+  background: var(--color-primary-soft);
+  color: var(--text);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius-sm);
+}
+
+.markdown-layer.markdown-content kbd {
+  display: inline-block;
+  padding: 0.05em 0.45em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.85em;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+  white-space: nowrap;
+}
+
+.markdown-layer.markdown-content :where(sub, sup) {
+  font-size: 0.75em;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+.markdown-layer.markdown-content sup { top: -0.5em; }
+.markdown-layer.markdown-content sub { bottom: -0.25em; }
+
+.markdown-layer.markdown-content abbr[title] {
+  text-decoration: underline dotted;
+  cursor: help;
+}
+
+.markdown-layer.markdown-content small {
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.markdown-layer.markdown-content dl {
+  margin: 0 0 var(--space-3);
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem var(--space-3);
+}
+
+.markdown-layer.markdown-content dt {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.markdown-layer.markdown-content dd {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.markdown-layer.markdown-content figure {
+  margin: var(--space-4) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.markdown-layer.markdown-content figure img {
+  margin: 0;
+}
+
+.markdown-layer.markdown-content figcaption {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.markdown-layer.markdown-content details {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.markdown-layer.markdown-content details[open] {
+  background: var(--surface-2);
+}
+
+.markdown-layer.markdown-content summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.markdown-layer.markdown-content summary::-webkit-details-marker { display: none; }
+
+.markdown-layer.markdown-content summary::before {
+  content: "▸";
+  display: inline-block;
+  transition: transform 0.2s ease;
+  color: var(--color-primary-strong);
+}
+
+.markdown-layer.markdown-content details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.markdown-layer.markdown-content video,
+.markdown-layer.markdown-content iframe {
+  display: block;
+  max-width: 100%;
+  width: 100%;
+  margin: var(--space-4) auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  aspect-ratio: 16 / 9;
+}
+
+.markdown-layer.markdown-content audio {
+  display: block;
+  width: 100%;
+  margin: var(--space-3) 0;
+}
+
+.markdown-layer.markdown-content :where(p, li, blockquote) > code {
+  word-break: break-word;
+}
+} /* @layer markdown */
 
 .event-detail-actions {
   display: flex;
@@ -2596,9 +2881,10 @@ body.theme-light .hero-network-visual {
 /* ---------- Lokaler KI-Chat ---------- */
 .ai-chat {
   --ai-chat-accent: var(--color-primary-strong);
+  --ai-chat-bottom-extra: 1rem;
   position: fixed;
   right: max(1rem, env(safe-area-inset-right, 0px));
-  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--ai-chat-keyboard-gap, 0px) + var(--ai-chat-bottom-extra));
   z-index: 320;
   display: flex;
   flex-direction: column;
@@ -2763,7 +3049,7 @@ body.theme-light .hero-network-visual {
   display: flex;
   flex-direction: column;
   width: min(26rem, calc(100vw - 2rem));
-  max-height: min(46rem, calc(100dvh - 5rem));
+  max-height: min(46rem, calc(var(--ai-chat-vvh, 100dvh) - 3.25rem));
   overflow: hidden;
   border: 1px solid rgba(125, 235, 255, 0.22);
   border-radius: var(--radius-xl);
@@ -3268,6 +3554,7 @@ body.theme-light .hero-network-visual {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
     rgba(2, 6, 23, 0.24);
+  touch-action: manipulation;
 }
 
 .ai-chat-form button:disabled,
@@ -3288,8 +3575,8 @@ body.theme-light .hero-network-visual {
   background: rgba(2, 6, 23, 0.32);
   color: var(--text);
   padding: 0.42rem 0.58rem;
-  font: inherit;
-  font-size: 0.88rem;
+  font-family: inherit;
+  font-size: max(16px, 0.88rem);
   line-height: 1.4;
 }
 
@@ -3489,7 +3776,7 @@ body.theme-light .ai-chat-form textarea {
 }
 
 .ai-chat--compact .ai-chat-panel {
-  max-height: min(44rem, calc(100dvh - 5rem));
+  max-height: min(44rem, calc(var(--ai-chat-vvh, 100dvh) - 3.25rem));
 }
 
 .ai-chat--compact .ai-chat-header {
@@ -3592,8 +3879,8 @@ body.theme-light .ai-chat-form textarea {
 
 @media (max-width: 560px) {
   .ai-chat {
+    --ai-chat-bottom-extra: 0.85rem;
     right: max(0.85rem, env(safe-area-inset-right, 0px));
-    bottom: max(0.7rem, env(safe-area-inset-bottom, 0px));
     left: auto;
     align-items: flex-end;
   }
@@ -3605,26 +3892,19 @@ body.theme-light .ai-chat-form textarea {
   }
 
   .ai-chat-panel {
-    width: 100%;
+    width: min(26rem, calc(100vw - 1.4rem));
+    max-height: min(44rem, calc(var(--ai-chat-vvh, 100dvh) - 2.75rem));
+    border-radius: 1.2rem;
   }
 
   .ai-chat-toggle {
     width: 3.75rem;
     height: 3.75rem;
+    justify-content: initial;
   }
 
   .ai-chat-toggle__hint {
     display: none;
-  }
-
-  .ai-chat-panel {
-    width: min(26rem, calc(100vw - 1.4rem));
-    max-height: min(44rem, calc(100dvh - 5rem));
-    border-radius: 1.2rem;
-  }
-
-  .ai-chat-toggle {
-    justify-content: initial;
   }
 
   .ai-chat-header {
@@ -3657,9 +3937,14 @@ body.theme-light .ai-chat-form textarea {
     grid-template-columns: 1fr;
   }
 
+  .ai-chat-settings select,
+  .ai-chat-settings input[type="number"] {
+    font-size: max(16px, 0.88rem);
+  }
+
   .ai-chat-messages {
     min-height: 8rem;
-    max-height: min(24rem, calc(100dvh - 15rem));
+    max-height: min(24rem, calc(var(--ai-chat-vvh, 100dvh) - 13.5rem));
     padding: 0.7rem;
   }
 

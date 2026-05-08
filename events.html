@@ -16,6 +16,7 @@
   Update History:
   - 02.05.2026  [Oliver Braun]   Project initialization
   - 08.05.2026  [Oliver Braun]   Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling.
+  - 09.05.2026  [Oliver Braun]   Markdown rendering and mobile UX polish.
 
   This project was independently developed and coded by me.
   Feel free to learn from the code, but please keep the attribution.
@@ -26,7 +27,10 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
     <title>Events | KI Netzwerk Schweinfurt</title>
     <meta name="description" content="Alle Events des KI Netzwerk Schweinfurt" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -91,7 +95,7 @@
             </div>
           </div>
         </section>
-        <div id="event-detail-body" class="markdown-content event-detail-body hidden"></div>
+        <div id="event-detail-body" class="markdown-layer markdown-content event-detail-body hidden"></div>
         <div class="event-detail-actions">
           <a
             id="event-detail-link"
