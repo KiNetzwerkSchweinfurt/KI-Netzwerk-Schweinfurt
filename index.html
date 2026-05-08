@@ -16,6 +16,7 @@
   Update History:
   - 02.05.2026  [Oliver Braun]   Project initialization
   - 07.05.2026  [Morteza Djebeli]  Initial change the text for the home page 
+  - 08.05.2026  [Oliver Braun]   Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling.
   This project was independently developed and coded by me.
   Feel free to learn from the code, but please keep the attribution.
   ============================================================================
@@ -38,7 +39,6 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./assets/css/styles.css" />
-    <script defer src="./assets/js/i18n.js"></script>
     <script defer src="./assets/js/main.js"></script>
   </head>
   <body data-page="home">
@@ -89,6 +89,16 @@
           <a class="link" href="./blog.html" data-i18n="common.showAll"></a>
         </div>
         <div id="latest-posts" class="blog-cards-grid"></div>
+      </section>
+
+      <section class="home-section container fade-in" id="sponsors">
+        <div class="section-head section-head--center">
+          <div>
+            <p class="eyebrow" data-i18n="home.sponsorsLabel"></p>
+            <h2 data-i18n="home.sponsorsTitle"></h2>
+          </div>
+        </div>
+        <div id="sponsor-strip" class="sponsor-strip" aria-live="polite"></div>
       </section>
 
       <section class="home-section container fade-in" id="mission">

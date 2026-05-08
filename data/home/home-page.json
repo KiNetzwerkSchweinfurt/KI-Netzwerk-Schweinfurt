@@ -1,0 +1,174 @@
+{
+  "_meta": {
+    "project": "KI Netzwerk Schweinfurt",
+    "pageName": "Home · Seiteninhalte",
+    "pathInProject": "data/home/home-page.json",
+    "developedBy": "Oliver Braun",
+    "github": "https://github.com/olli-br",
+    "developmentStart": "2026-04",
+    "currentVersion": "0.1.0",
+    "updateHistory": [
+      {
+        "date": "2026-05-02",
+        "author": "[Oliver Braun]",
+        "changes": "Project initialization"
+      },
+      {
+        "date": "2026-05-08",
+        "author": "[Oliver Braun]",
+        "changes": "Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling."
+      }
+    ]
+  },
+  "heroLabel": {
+    "de": "Initiative für KI in Mainfranken",
+    "en": "AI initiative in Schweinfurt"
+  },
+  "heroTitle": {
+    "de": "KI Netzwerk Schweinfurt",
+    "en": "AI Network Schweinfurt"
+  },
+  "heroText": {
+    "de": "Das KI Netzwerk Schweinfurt schafft einen offenen Austauschraum für angewandte Künstliche Intelligenz in Industrie, Engineering und Softwareentwicklung. Im Fokus stehen reale Use Cases, moderne KI-Technologien, agentische Systeme, Automatisierung sowie der nachhaltige Aufbau von KI-Kompetenz in der Region.",
+    "en": "The AI Network Schweinfurt creates an open exchange space for applied Artificial Intelligence in industry, engineering, and software development. The focus is on real use cases, modern AI technologies, agentic systems, automation, and the sustainable development of AI expertise in the region."
+  },
+  "heroCtaPrimary": {
+    "de": "Zu den Events",
+    "en": "View events"
+  },
+  "heroCtaSecondary": {
+    "de": "Mehr erfahren",
+    "en": "Learn more"
+  },
+  "heroStatus": {
+    "de": "REGIONAL. PRAXISNAH. VERTRAUENSWÜRDIG.",
+    "en": "REGIONAL. PRACTICAL. TRUSTWORTHY."
+  },
+  "heroPanelTitle": {
+    "de": "Praxisorientierte KI für Mainfranken",
+    "en": "Practice-Oriented AI for Mainfranken"
+  },
+  "heroPanelText": {
+    "de": "Von generativer KI über Agentensysteme bis zu Automatisierung und Embedded AI: Wir schaffen einen offenen Raum für technologische Impulse, Vernetzung und praktische Umsetzung in der Region Mainfranken.",
+    "en": "From generative AI and agent systems to automation and embedded AI: we create an open space for technological inspiration, networking, and practical implementation in the Mainfranken region."
+  },
+  "nextEventsLabel": {
+    "de": "Kalender",
+    "en": "Calendar"
+  },
+  "nextEvents": {
+    "de": "Nächste Events",
+    "en": "Upcoming events"
+  },
+  "nextEventsIntro": {
+    "de": "Entdecke die nächsten Treffen, Workshops und Austauschformate im Netzwerk.",
+    "en": "Discover upcoming meetups, workshops and exchange formats in the network."
+  },
+  "nextEventBar": {
+    "de": "Nächstes Event:",
+    "en": "Next event:"
+  },
+  "recapLabel": {
+    "de": "Rückblicke",
+    "en": "Recaps"
+  },
+  "recapTitle": {
+    "de": "Aktuelle Beiträge aus dem Netzwerk",
+    "en": "Latest posts from the network"
+  },
+  "recapIntro": {
+    "de": "Einblicke, Learnings und Highlights aus vergangenen Veranstaltungen.",
+    "en": "Insights, learnings and highlights from previous events."
+  },
+  "sponsors": [
+    {
+      "name": "StudyFAB",
+      "logo": "./assets/images/StudyFAB_Logo.jpeg",
+      "link": "https://schweinfurt-fabulous.de/schweinfurt-fabulous/studyfab"
+    }
+  ],
+  "sponsorsLabel": {
+    "de": "Sponsoren",
+    "en": "Sponsors"
+  },
+  "sponsorsTitle": {
+    "de": "Unterstützt von starken Partnern",
+    "en": "Supported by strong partners"
+  },
+  "missionLabel": {
+    "de": "Mission",
+    "en": "Mission"
+  },
+  "missionTitle": {
+    "de": "KI verständlich, anwendbar und regional vernetzt",
+    "en": "AI that is understandable, applicable and regionally connected"
+  },
+  "missionIntro": {
+    "de": "Wir schaffen einen Raum für Austausch, konkrete Use Cases und gemeinsame Weiterentwicklung.",
+    "en": "We create a space for exchange, concrete use cases and shared growth."
+  },
+  "feature1Title": {
+    "de": "Praxisfokus",
+    "en": "Practical focus"
+  },
+  "feature1Text": {
+    "de": "Reale Anwendungen statt Theorie: KI-Projekte aus Alltag und Unternehmen.",
+    "en": "Real applications over theory: AI projects from daily practice and business."
+  },
+  "feature2Title": {
+    "de": "Wissen teilen",
+    "en": "Share knowledge"
+  },
+  "feature2Text": {
+    "de": "Erfahrungen, Methoden und Werkzeuge werden offen im Netzwerk geteilt.",
+    "en": "Experience, methods and tools are shared openly in the network."
+  },
+  "feature3Title": {
+    "de": "Community stärken",
+    "en": "Strengthen community"
+  },
+  "feature3Text": {
+    "de": "Wir vernetzen Menschen aus Wirtschaft, Bildung und öffentlichem Sektor.",
+    "en": "We connect people from business, education and the public sector."
+  },
+  "feature4Title": {
+    "de": "Regionale Wirkung",
+    "en": "Regional impact"
+  },
+  "feature4Text": {
+    "de": "Mainfranken als Standort für verantwortungsvolle KI sichtbar machen.",
+    "en": "Make Mainfranken visible as a location for responsible AI."
+  },
+  "faqLabel": {
+    "de": "Fragen & Antworten",
+    "en": "Questions & answers"
+  },
+  "faqTitle": {
+    "de": "Häufige Fragen",
+    "en": "Frequently asked questions"
+  },
+  "faqIntro": {
+    "de": "Die wichtigsten Antworten rund um Teilnahme, Themen und Formate.",
+    "en": "Key answers about participation, topics and formats."
+  },
+  "ctaLabel": {
+    "de": "Kontakt",
+    "en": "Contact"
+  },
+  "ctaTitle": {
+    "de": "Jetzt Teil des Netzwerks werden",
+    "en": "Become part of the network now"
+  },
+  "ctaText": {
+    "de": "Du willst mitmachen, ein Thema einbringen oder als Partner unterstützen? Melde dich bei uns.",
+    "en": "Want to join, contribute a topic or support as a partner? Get in touch."
+  },
+  "ctaButton": {
+    "de": "E-Mail schreiben",
+    "en": "Send email"
+  },
+  "ctaSecondary": {
+    "de": "Alle Events ansehen",
+    "en": "See all events"
+  }
+}

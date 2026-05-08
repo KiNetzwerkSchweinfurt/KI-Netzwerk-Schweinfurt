@@ -12,6 +12,11 @@
         "date": "2026-05-02",
         "author": "[Oliver Braun]",
         "changes": "Project initialization"
+      },
+      {
+        "date": "2026-05-08",
+        "author": "[Oliver Braun]",
+        "changes": "Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling."
       }
     ]
   },
@@ -41,9 +46,9 @@
       "de": "Best Practices für KI im industriellen Umfeld.",
       "en": "Best practices for AI in industrial environments."
     },
-    "content": {
-      "de": "## Themen\n\nQualitätsinspektion, Instandhaltung und IT/OT-Anbindung.",
-      "en": "## Topics\n\nQuality inspection, maintenance and IT/OT integration."
+    "contentFile": {
+      "de": "./data/event/events/markdown/event-ai-manufacturing.de.md",
+      "en": "./data/event/events/markdown/event-ai-manufacturing.en.md"
     }
   }
 }

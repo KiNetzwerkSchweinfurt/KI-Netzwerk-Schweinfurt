@@ -13,6 +13,7 @@
 
   Update History:
   - 02.05.2026  [Oliver Braun]   Project initialization
+  - 08.05.2026  [Oliver Braun]   Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling.
 
 
   Independently developed by me.
@@ -32,11 +33,14 @@
     homeEvents: null,
     _eventsData: null,
     _postsData: null,
-    _startPageContent: null,
+    _homePageContent: null,
     _aboutPageContent: null,
     _eventsPageContent: null,
     _blogPageContent: null,
+    _globalData: null,
     _eventCardCountdownTimer: null,
+    _markdownParser: null,
+    _markdownReadyPromise: null,
     /** @type {null | (() => void)} */
     _networkScrollCleanup: null
   };
@@ -50,6 +54,7 @@
     initTheme();
     console.log("Theme initialized");
     await loadPageTextContent();
+    await ensureMarkdownParser();
     console.log("Page text content loaded");
     initHeaderNetworkAnimation();
     applyTranslations();
@@ -170,6 +175,30 @@
       .join("");
   }
 
+  function renderPartnerLogos() {
+    const host = document.getElementById("about-partner-logos");
+    if (!host) return;
+    const logos = state._aboutPageContent?.partnerLogos;
+    if (!Array.isArray(logos) || !logos.length) {
+      return;
+    }
+    host.innerHTML = logos
+      .map((logo) => {
+        const src = String(logo?.src || "").trim();
+        const name = String(logo?.name || "").trim();
+        const href = String(logo?.href || "").trim();
+        if (!src || !name) return "";
+        const logoImg = `<img src="${escapeHtml(src)}" alt="${escapeHtml(name)}" loading="lazy" />`;
+        if (href) {
+          const normalized = href.startsWith("http") ? href : `https://${href}`;
+          return `<a class="about-partner-logo" href="${escapeHtml(normalized)}" target="_blank" rel="noopener noreferrer">${logoImg}</a>`;
+        }
+        return `<span class="about-partner-logo">${logoImg}</span>`;
+      })
+      .filter(Boolean)
+      .join("");
+  }
+
   function renderInitiators() {
     const eyebrowEl = document.getElementById("about-initiators-eyebrow");
     const container = document.getElementById("about-initiators-container");
@@ -224,6 +253,7 @@
     set("about-participants-closing", pickAboutField("participantsClosing"));
     set("about-partners-title", pickAboutField("partnersTitle"));
     set("about-partners-text", pickAboutField("partnersText"));
+    renderPartnerLogos();
     renderAboutChipRow(document.getElementById("about-partner-chips"), state._aboutPageContent.partnerChips);
     renderInitiators();
   }
@@ -231,7 +261,7 @@
   function getI18n(path) {
     const dynamic = getDynamicPageText(path);
     if (dynamic) return dynamic;
-    const table = window.I18N?.[state.lang] || {};
+    const table = state._globalData?.[state.lang] || {};
     return path.split(".").reduce((acc, key) => (acc ? acc[key] : ""), table) || "";
   }
 
@@ -240,7 +270,7 @@
     const section = parts.shift();
     if (!section || !parts.length) return "";
     let source = null;
-    if (section === "home") source = state._startPageContent;
+    if (section === "home") source = state._homePageContent;
     if (section === "about") source = state._aboutPageContent;
     if (section === "events") source = state._eventsPageContent;
     if (section === "blog") source = state._blogPageContent;
@@ -252,17 +282,19 @@
 
   async function loadPageTextContent() {
     console.log("Loading page text content");
-    const [startData, aboutData, eventsData, blogData] = await Promise.all([
-      fetchJson("./data/start/start-page.json"),
+    const [homeData, aboutData, eventsData, blogData, globalData] = await Promise.all([
+      fetchJson("./data/home/home-page.json"),
       fetchJson("./data/about/about-page.json"),
       fetchJson("./data/event/events-page.json"),
-      fetchJson("./data/blog/blog-page.json")
+      fetchJson("./data/blog/blog-page.json"),
+      fetchJson("./data/global/global.json")
     ]);
-    console.log("Fetched data:", { startData, aboutData, eventsData, blogData });
-    state._startPageContent = startData || null;
+    console.log("Fetched data:", { homeData, aboutData, eventsData, blogData, globalData });
+    state._homePageContent = homeData || null;
     state._aboutPageContent = aboutData || null;
     state._eventsPageContent = eventsData || null;
     state._blogPageContent = blogData || null;
+    state._globalData = globalData || null;
   }
 
   function applyTranslations() {
@@ -416,7 +448,7 @@
     });
 
     window.addEventListener("resize", () => {
-      if (window.innerWidth >= 760) closeMenu();
+      if (window.innerWidth >= 980) closeMenu();
     });
   }
 
@@ -437,7 +469,74 @@
     state.homeEvents = Array.isArray(events) ? events : [];
     renderNextEvents(state.homeEvents);
     renderLatestPosts(Array.isArray(posts) ? posts : []);
+    renderHomeSponsors();
     initNetworkAnimation();
+  }
+
+  function renderHomeSponsors() {
+    const slot = document.getElementById("sponsor-strip");
+    if (!slot) return;
+    const rawSponsors = Array.isArray(state._homePageContent?.sponsors)
+      ? state._homePageContent.sponsors
+      : [];
+    if (!rawSponsors.length) {
+      slot.innerHTML = "";
+      return;
+    }
+    const seen = new Set();
+    const sponsors = rawSponsors.filter((entry) => {
+      const name = String(entry?.name || "").trim();
+      const link = String(entry?.link || "").trim();
+      const logo = String(entry?.logo || "").trim();
+      if (!name) return false;
+      const key = `${name}::${link}::${logo}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    if (!sponsors.length) {
+      slot.innerHTML = "";
+      return;
+    }
+
+    const minVisibleItems = 8;
+    const repeatedSponsors = [];
+    while (repeatedSponsors.length < minVisibleItems) {
+      repeatedSponsors.push(...sponsors);
+    }
+    const marqueeSponsors = repeatedSponsors.slice(0, Math.max(minVisibleItems, sponsors.length * 4));
+
+    const items = marqueeSponsors
+      .map((entry) => {
+        const name = String(entry?.name || "").trim();
+        const link = String(entry?.link || "").trim();
+        const logo = String(entry?.logo || "").trim();
+        if (!name) return "";
+        const inner = logo
+          ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(name)}" loading="lazy" />`
+          : escapeHtml(name);
+        const safeLink = link.startsWith("./") || link.startsWith("/") || link.startsWith("http")
+          ? link
+          : `https://${link}`;
+        if (safeLink) {
+          const external = safeLink.startsWith("http");
+          const target = external ? ` target="_blank" rel="noopener noreferrer"` : "";
+          return `<a class="sponsor-item" href="${escapeHtml(safeLink)}"${target}>${inner}</a>`;
+        }
+        return `<span class="sponsor-item">${inner}</span>`;
+      })
+      .filter(Boolean)
+      .join("");
+
+    const duration = Math.max(12, marqueeSponsors.length * 2.4);
+    slot.style.setProperty("--sponsor-duration", `${duration}s`);
+    slot.innerHTML = `
+      <div class="sponsor-marquee">
+        <div class="sponsor-track">${items}</div>
+        <div class="sponsor-track" aria-hidden="true">${items}</div>
+      </div>
+    `;
   }
 
   function initHeaderNetworkAnimation() {
@@ -565,60 +664,182 @@
     canvas.height = Math.round(cssHeight * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const points = [
-      { x: 36, y: 40, vx: 0.14, vy: 0.08, r: 4.1 },
-      { x: 108, y: 52, vx: 0.12, vy: -0.08, r: 3.6 },
-      { x: 188, y: 38, vx: -0.11, vy: 0.09, r: 3.9 },
-      { x: 278, y: 50, vx: 0.13, vy: -0.1, r: 3.7 },
-      { x: 364, y: 72, vx: -0.09, vy: 0.12, r: 4.2 },
-      { x: 72, y: 138, vx: -0.12, vy: 0.08, r: 3.8 },
-      { x: 158, y: 128, vx: 0.1, vy: -0.07, r: 4 },
-      { x: 248, y: 144, vx: -0.08, vy: 0.11, r: 3.6 },
-      { x: 338, y: 168, vx: 0.11, vy: -0.09, r: 4 },
-      { x: 218, y: 206, vx: 0.07, vy: 0.09, r: 3.7 },
-      { x: 118, y: 206, vx: -0.1, vy: -0.07, r: 3.8 },
-      { x: 298, y: 218, vx: 0.1, vy: -0.08, r: 3.9 }
+    const seedPoints = [
+      { x: 0.05, y: 0.11, vx: 0.14, vy: 0.08, r: 4.1 },
+      { x: 0.11, y: 0.15, vx: 0.12, vy: -0.08, r: 3.6 },
+      { x: 0.17, y: 0.1, vx: -0.11, vy: 0.09, r: 3.9 },
+      { x: 0.23, y: 0.14, vx: 0.13, vy: -0.1, r: 3.7 },
+      { x: 0.29, y: 0.17, vx: -0.09, vy: 0.12, r: 4.2 },
+      { x: 0.35, y: 0.21, vx: -0.08, vy: 0.09, r: 3.5 },
+      { x: 0.41, y: 0.24, vx: -0.1, vy: -0.06, r: 3.8 },
+      { x: 0.47, y: 0.28, vx: 0.1, vy: -0.08, r: 3.7 },
+      { x: 0.08, y: 0.4, vx: -0.12, vy: 0.08, r: 3.8 },
+      { x: 0.16, y: 0.44, vx: 0.1, vy: -0.07, r: 4 },
+      { x: 0.24, y: 0.47, vx: -0.08, vy: 0.11, r: 3.6 },
+      { x: 0.32, y: 0.5, vx: 0.11, vy: -0.09, r: 4 },
+      { x: 0.4, y: 0.54, vx: 0.1, vy: -0.08, r: 3.9 },
+      { x: 0.48, y: 0.59, vx: -0.09, vy: 0.08, r: 3.7 },
+      { x: 0.12, y: 0.72, vx: -0.1, vy: -0.07, r: 3.8 },
+      { x: 0.23, y: 0.77, vx: 0.07, vy: 0.09, r: 3.7 },
+      { x: 0.35, y: 0.81, vx: 0.1, vy: -0.08, r: 3.9 },
+      { x: 0.5, y: 0.85, vx: -0.09, vy: 0.08, r: 3.7 },
+      { x: 0.74, y: 0.2, vx: 0.08, vy: -0.07, r: 3.6 },
+      { x: 0.88, y: 0.66, vx: 0.08, vy: -0.07, r: 3.6 },
+      { x: 0.82, y: 0.12, vx: -0.07, vy: 0.08, r: 3.5 },
+      { x: 0.94, y: 0.28, vx: 0.06, vy: -0.06, r: 3.4 },
+      { x: 0.79, y: 0.46, vx: -0.06, vy: 0.07, r: 3.5 },
+      { x: 0.93, y: 0.84, vx: 0.07, vy: -0.06, r: 3.5 }
     ];
+    const speedScale = 1.28;
+    const points = seedPoints.map((p) => ({
+      x: p.x * cssWidth,
+      y: p.y * cssHeight,
+      vx: p.vx * speedScale,
+      vy: p.vy * speedScale,
+      r: p.r
+    }));
 
     const edges = [
-      [0, 1],
-      [1, 2],
-      [2, 3],
-      [3, 4],
-      [0, 5],
-      [1, 6],
-      [2, 6],
-      [2, 7],
-      [3, 7],
-      [4, 8],
-      [5, 6],
-      [6, 7],
-      [7, 8],
-      [6, 9],
-      [7, 9],
-      [5, 9],
-      [9, 10],
-      [9, 11],
-      [10, 11],
-      [6, 10],
-      [7, 11]
+      [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7],
+      [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14],
+      [15, 16], [16, 17], [17, 18], [18, 19],
+      [0, 8], [1, 9], [2, 10], [3, 11], [4, 12], [5, 13], [6, 14],
+      [8, 15], [9, 16], [10, 17], [11, 17], [12, 18], [13, 19],
+      [2, 9], [3, 10], [4, 11], [5, 12], [6, 13],
+      [9, 15], [10, 16], [11, 18], [12, 19],
+      [6, 20], [7, 20], [20, 21], [21, 22], [22, 23],
+      [14, 22], [19, 23], [13, 22], [10, 21], [18, 22]
     ];
 
     const packets = [
-      { edge: 0, t: 0.15, speed: 0.0048 },
-      { edge: 3, t: 0.5, speed: 0.0054 },
-      { edge: 6, t: 0.23, speed: 0.0061 },
-      { edge: 10, t: 0.66, speed: 0.0052 },
-      { edge: 14, t: 0.36, speed: 0.0064 },
-      { edge: 17, t: 0.48, speed: 0.0057 },
-      { edge: 20, t: 0.08, speed: 0.006 }
+      { edge: 0, t: 0.15, speed: 0.0062 },
+      { edge: 4, t: 0.5, speed: 0.0069 },
+      { edge: 7, t: 0.23, speed: 0.0076 },
+      { edge: 11, t: 0.66, speed: 0.0067 },
+      { edge: 16, t: 0.36, speed: 0.0079 },
+      { edge: 20, t: 0.48, speed: 0.0071 },
+      { edge: 24, t: 0.08, speed: 0.0073 },
+      { edge: 28, t: 0.72, speed: 0.007 },
+      { edge: 33, t: 0.31, speed: 0.0068 },
+      { edge: 41, t: 0.44, speed: 0.0072 },
+      { edge: 46, t: 0.21, speed: 0.0071 }
     ];
+
+    const pointerState = {
+      x: cssWidth * 0.5,
+      y: cssHeight * 0.5,
+      active: false
+    };
+    const clickBursts = [];
+    let draggedPointIndex = -1;
+
+    function getCanvasPos(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      };
+    }
+
+    function findNearestPoint(x, y) {
+      let nearestIndex = -1;
+      let nearestDist = Infinity;
+      points.forEach((p, i) => {
+        const dx = p.x - x;
+        const dy = p.y - y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestIndex = i;
+        }
+      });
+      return { nearestIndex, nearestDist };
+    }
+
+    function onPointerDown(event) {
+      const pos = getCanvasPos(event);
+      pointerState.x = pos.x;
+      pointerState.y = pos.y;
+      pointerState.active = true;
+      clickBursts.push({ x: pos.x, y: pos.y, radius: 8, life: 1, speed: 2.4 });
+      clickBursts.push({ x: pos.x, y: pos.y, radius: 2, life: 0.72, speed: 3.4 });
+      const nearest = findNearestPoint(pos.x, pos.y);
+      if (nearest.nearestDist <= 22) {
+        draggedPointIndex = nearest.nearestIndex;
+        canvas.style.cursor = "grabbing";
+      }
+      if (canvas.setPointerCapture) {
+        try {
+          canvas.setPointerCapture(event.pointerId);
+        } catch (_) {
+          // ignore unsupported capture errors
+        }
+      }
+    }
+
+    function onPointerMove(event) {
+      const pos = getCanvasPos(event);
+      pointerState.x = pos.x;
+      pointerState.y = pos.y;
+      pointerState.active = true;
+      if (draggedPointIndex >= 0) {
+        const p = points[draggedPointIndex];
+        p.x = Math.max(12, Math.min(cssWidth - 12, pos.x));
+        p.y = Math.max(12, Math.min(cssHeight - 12, pos.y));
+        p.vx *= 0.84;
+        p.vy *= 0.84;
+      } else {
+        const nearest = findNearestPoint(pos.x, pos.y);
+        canvas.style.cursor = nearest.nearestDist <= 24 ? "grab" : "default";
+      }
+    }
+
+    function onPointerUp(event) {
+      draggedPointIndex = -1;
+      pointerState.active = false;
+      canvas.style.cursor = "default";
+      if (event && canvas.releasePointerCapture) {
+        try {
+          canvas.releasePointerCapture(event.pointerId);
+        } catch (_) {
+          // ignore unsupported capture errors
+        }
+      }
+    }
+
+    function onPointerLeave() {
+      draggedPointIndex = -1;
+      pointerState.active = false;
+      canvas.style.cursor = "default";
+    }
+
+    canvas.addEventListener("pointerdown", onPointerDown);
+    canvas.addEventListener("pointermove", onPointerMove);
+    canvas.addEventListener("pointerup", onPointerUp);
+    canvas.addEventListener("pointercancel", onPointerUp);
+    canvas.addEventListener("pointerleave", onPointerLeave);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
 
     let rafId = 0;
     const animate = () => {
       ctx.clearRect(0, 0, cssWidth, cssHeight);
 
-      points.forEach((p) => {
+      points.forEach((p, index) => {
+        if (index !== draggedPointIndex && pointerState.active) {
+          const dx = p.x - pointerState.x;
+          const dy = p.y - pointerState.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist < 120) {
+            const force = (120 - dist) * 0.00115;
+            p.vx += (dx / dist) * force;
+            p.vy += (dy / dist) * force;
+          }
+        }
+        if (index !== draggedPointIndex) {
+          p.vx *= 0.9975;
+          p.vy *= 0.9975;
+        }
         p.x += p.vx;
         p.y += p.vy;
         if (p.x < 10 || p.x > cssWidth - 10) p.vx *= -1;
@@ -639,6 +860,45 @@
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
       });
+
+      for (let i = 0; i < points.length; i += 1) {
+        for (let j = i + 1; j < points.length; j += 1) {
+          const p1 = points[i];
+          const p2 = points[j];
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist > 0 && dist < 86) {
+            const alpha = (1 - dist / 86) * 0.24;
+            ctx.strokeStyle = `rgba(96,165,250,${alpha.toFixed(3)})`;
+            ctx.lineWidth = 1.05;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      for (let i = clickBursts.length - 1; i >= 0; i -= 1) {
+        const burst = clickBursts[i];
+        burst.radius += burst.speed;
+        burst.life -= 0.026;
+        if (burst.life <= 0) {
+          clickBursts.splice(i, 1);
+          continue;
+        }
+        const alpha = Math.max(0, burst.life * 0.72);
+        ctx.strokeStyle = `rgba(45,212,191,${alpha})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(burst.x, burst.y, burst.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = `rgba(125,235,255,${Math.max(0, burst.life * 0.23)})`;
+        ctx.beginPath();
+        ctx.arc(burst.x, burst.y, Math.max(2, burst.radius * 0.18), 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       packets.forEach((packet) => {
         const [a, b] = edges[packet.edge];
@@ -689,6 +949,13 @@
 
     state.stopNetworkAnimation = () => {
       window.cancelAnimationFrame(rafId);
+      canvas.removeEventListener("pointerdown", onPointerDown);
+      canvas.removeEventListener("pointermove", onPointerMove);
+      canvas.removeEventListener("pointerup", onPointerUp);
+      canvas.removeEventListener("pointercancel", onPointerUp);
+      canvas.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
       if (typeof state._networkScrollCleanup === "function") {
         state._networkScrollCleanup();
         state._networkScrollCleanup = null;
@@ -750,11 +1017,16 @@
   async function loadEvents() {
     const rawItems = await loadEventEntries();
     if (!Array.isArray(rawItems)) return [];
-    const items = rawItems
-      .filter(Boolean)
-      .map((item) => {
+    const items = (
+      await Promise.all(
+        rawItems.filter(Boolean).map(async (item) => {
         const loc = item.location && typeof item.location === "object" ? item.location : {};
         const plain = formatLocationPlain(loc, state.lang);
+        const localizedContent = await resolveLocalizedMarkdown(
+          item.detail?.contentFile,
+          item.detail?.content,
+          state.lang
+        );
         return {
           ...item,
           title: item.title?.[state.lang] || item.title?.de || "",
@@ -765,8 +1037,7 @@
             item.description?.de ||
             "",
           content:
-            item.detail?.content?.[state.lang] ||
-            item.detail?.content?.de ||
+            localizedContent ||
             item.content?.[state.lang] ||
             item.content?.de ||
             "",
@@ -775,6 +1046,8 @@
           geo: item.geo && typeof item.geo === "object" ? item.geo : null
         };
       })
+      )
+    )
       .filter((item) => item && item.date);
     return items.sort((a, b) => new Date(a.date) - new Date(b.date));
   }
@@ -901,11 +1174,11 @@
     const isNext = !past && nextUpcomingId !== null && String(event.id) === String(nextUpcomingId);
     const badge = past
       ? `<span class="event-status-badge event-status-badge--past">${escapeHtml(
-          getI18n("events.pastBadge")
+          getI18n("events.detail.pastBadge")
         )}</span>`
       : isNext
         ? `<span class="event-status-badge event-status-badge--next">${escapeHtml(
-            getI18n("events.nextBadge")
+            getI18n("events.detail.nextBadge")
           )}</span>`
         : "";
     const { day, month } = getEventDateBadgeParts(event.date);
@@ -944,12 +1217,12 @@
     const upcoming = events
       .filter((e) => !isEventPast(e))
       .sort((a, b) => new Date(a.date) - new Date(b.date));
-    let toShow = upcoming.slice(0, 3);
+    let toShow = upcoming.slice(0, 2);
     if (!toShow.length && Array.isArray(events) && events.length) {
       const past = events
         .filter((e) => isEventPast(e))
         .sort((a, b) => new Date(b.date) - new Date(a.date));
-      toShow = past.slice(0, 3);
+      toShow = past.slice(0, 2);
     }
     renderEventCards(slot, toShow);
   }
@@ -1140,28 +1413,42 @@
   async function loadPostsIndex() {
     const rawItems = await loadPostEntries();
     if (!Array.isArray(rawItems)) return [];
-    const items = rawItems
-      .filter(Boolean)
-      .map((item) => ({
-        ...item,
-        title: item.title?.[state.lang] || item.title?.de || "",
-        teaser: item.teaser?.[state.lang] || item.teaser?.de || "",
-        content:
-          item.detail?.content?.[state.lang] ||
-          item.detail?.content?.de ||
-          item.content?.[state.lang] ||
-          item.content?.de ||
-          "",
-        readTime: blogReadTimeLabel(item)
-      }))
+    const items = (
+      await Promise.all(
+        rawItems.filter(Boolean).map(async (item) => ({
+          ...item,
+          title: item.title?.[state.lang] || item.title?.de || "",
+          teaser: item.teaser?.[state.lang] || item.teaser?.de || "",
+          content:
+            (await resolveLocalizedMarkdown(item.detail?.contentFile, item.detail?.content, state.lang)) ||
+            item.content?.[state.lang] ||
+            item.content?.de ||
+            "",
+          readTime: blogReadTimeLabel(item)
+        }))
+      )
+    )
       .filter((item) => item && item.date);
     return items.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }
+
+  async function resolveLocalizedMarkdown(fileRef, inlineRef, lang) {
+    const filePath =
+      (fileRef && typeof fileRef === "object" ? fileRef[lang] || fileRef.de : "") ||
+      (typeof fileRef === "string" ? fileRef : "");
+    if (filePath) {
+      const markdown = await fetchText(filePath);
+      if (markdown && markdown.trim()) return markdown;
+    }
+    if (inlineRef && typeof inlineRef === "object") return inlineRef[lang] || inlineRef.de || "";
+    if (typeof inlineRef === "string") return inlineRef;
+    return "";
   }
 
   function renderLatestPosts(posts) {
     const slot = document.getElementById("latest-posts");
     if (!slot) return;
-    const latest = posts.slice(0, 3);
+    const latest = posts.slice(0, 2);
     if (!latest.length) {
       slot.innerHTML = `<p>${getI18n("common.noData")}</p>`;
       return;
@@ -1307,36 +1594,46 @@
     return state._postsData;
   }
 
+  async function ensureMarkdownParser() {
+    if (state._markdownParser) return state._markdownParser;
+    if (state._markdownReadyPromise) return state._markdownReadyPromise;
+    if (window.marked?.parse) {
+      state._markdownParser = window.marked.parse.bind(window.marked);
+      return state._markdownParser;
+    }
+    state._markdownReadyPromise = import("https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js")
+      .then((mod) => {
+        const parser = mod?.marked?.parse;
+        if (typeof parser === "function") {
+          state._markdownParser = parser.bind(mod.marked);
+          return state._markdownParser;
+        }
+        throw new Error("No markdown parser available");
+      })
+      .catch((err) => {
+        console.warn("Markdown library could not be loaded:", err);
+        state._markdownParser = null;
+        return state._markdownParser;
+      })
+      .finally(() => {
+        state._markdownReadyPromise = null;
+      });
+    return state._markdownReadyPromise;
+  }
+
   function markdownToHtml(markdown) {
-    const escaped = markdown
+    if (typeof state._markdownParser === "function") {
+      try {
+        return state._markdownParser(String(markdown || ""));
+      } catch (err) {
+        console.warn("Markdown parser failed, rendering escaped text:", err);
+      }
+    }
+    const escaped = String(markdown || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
-
-    return escaped
-      .split("\n\n")
-      .map((block) => {
-        if (block.startsWith("### ")) return `<h3>${inlineMd(block.slice(4))}</h3>`;
-        if (block.startsWith("## ")) return `<h2>${inlineMd(block.slice(3))}</h2>`;
-        if (block.startsWith("# ")) return `<h1>${inlineMd(block.slice(2))}</h1>`;
-        if (block.startsWith("- ")) {
-          const items = block
-            .split("\n")
-            .map((line) => line.replace(/^- /, "").trim())
-            .map((item) => `<li>${inlineMd(item)}</li>`)
-            .join("");
-          return `<ul>${items}</ul>`;
-        }
-        return `<p>${inlineMd(block.replace(/\n/g, "<br />"))}</p>`;
-      })
-      .join("");
-  }
-
-  function inlineMd(text) {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      .replace(/\[(.*?)\]\((.*?)\)/g, '<a class="link" href="$2">$1</a>');
+    return `<pre>${escaped}</pre>`;
   }
 
   function renderTemplate(template, data) {

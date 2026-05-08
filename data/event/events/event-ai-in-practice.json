@@ -12,6 +12,11 @@
         "date": "2026-05-02",
         "author": "[Oliver Braun]",
         "changes": "Project initialization"
+      },
+      {
+        "date": "2026-05-08",
+        "author": "[Oliver Braun]",
+        "changes": "Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling."
       }
     ]
   },
@@ -41,9 +46,9 @@
       "de": "Einführung in praktische KI-Anwendungen für Unternehmen.",
       "en": "Introduction to practical AI use cases for companies."
     },
-    "content": {
-      "de": "## Was dich erwartet\n\nKonkrete Beispiele von der Idee bis zum Pilotbetrieb.",
-      "en": "## What to expect\n\nConcrete examples from idea to pilot."
+    "contentFile": {
+      "de": "./data/event/events/markdown/event-ai-in-practice.de.md",
+      "en": "./data/event/events/markdown/event-ai-in-practice.en.md"
     }
   }
 }

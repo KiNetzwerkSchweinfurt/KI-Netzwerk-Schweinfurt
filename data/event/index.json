@@ -17,6 +17,11 @@
         "date": "2026-05-07",
         "author": "[morteza djebeli]",
         "changes": "write the real current events"
+      },
+      {
+        "date": "2026-05-08",
+        "author": "[Oliver Braun]",
+        "changes": "Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling."
       }
     ]
   },
