@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "project": "Ki Netzwerk Schweinfurt",
+    "project": "KI Netzwerk Schweinfurt",
     "pageName": "Über uns · Seiteninhalte",
     "pathInProject": "data/about/about-page.json",
     "developedBy": "Oliver Braun",
@@ -24,7 +24,7 @@
     "en": "About us"
   },
   "subtitle": {
-    "de": "Das Ki Netzwerk Schweinfurt verbindet Menschen, die Künstliche Intelligenz nicht nur diskutieren, sondern in Alltag, Betrieb und Verwaltung anwenden wollen.",
+    "de": "Das KI Netzwerk Schweinfurt verbindet Menschen, die Künstliche Intelligenz nicht nur diskutieren, sondern in Alltag, Betrieb und Verwaltung anwenden wollen.",
     "en": "The AI Network Schweinfurt connects people who want to apply Artificial Intelligence in daily work, business and public service—not only discuss it."
   },
   "intro": {
@@ -74,8 +74,27 @@
     "en": "Partners provide venues, tech, catering or visibility and strengthen transfer between science, business and civil society. We thank everyone who supports the initiative."
   },
   "partnerChips": [
-    { "de": "Partner A", "en": "Partner A" },
+    { "de": "StudyFAB by netSWerk e.V.", "en": "StudyFAB by netSWerk e.V." },
     { "de": "Partner B", "en": "Partner B" },
     { "de": "Partner C", "en": "Partner C" }
+  ],
+  "initiatorsEyebrow": {
+    "de": "Initiiert von",
+    "en": "Initiated by"
+  },
+  "initiators": [
+    {
+      "name": "Morteza Djebeli Sinaki",
+      "role": {
+        "de": "Unabhängiger Dozent · KI-Manager · Angewandter KI-Experte",
+        "en": "Independent Lecturer · AI Manager · Applied AI Expert"
+      },
+      "bio": {
+        "de": "Initiiert von Morteza Djebeli Sinaki, unabhängiger Dozent, KI-Manager und angewandter KI-Experte in der Produkt- und Systementwicklung, mit Schwerpunkten in Automotive, eingebetteter Software und intelligenten Systemen.\n\nZiel ist es, Menschen, Ideen und reale KI-Anwendungen in der Region Mainfranken zu vernetzen.",
+        "en": "Initiated by Morteza Djebeli Sinaki independent lecturer, AI manager, and applied AI expert in product development and engineering, with a focus on automotive, embedded software, and intelligent systems.\n\nThe aim is to connect people, ideas, and real AI applications in the Mainfranken region."
+      },
+      "image": "./assets/images/aboutme_1200x900.png",
+      "linkedin": "https://www.linkedin.com/in/morteza-djebeli-sinaki"
+    }
   ]
 }

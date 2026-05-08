@@ -1,0 +1,55 @@
+{
+  "_meta": {
+    "project": "KI Netzwerk Schweinfurt",
+    "pageName": "Event · Kick-off KI Netzwerk",
+    "pathInProject": "data/event/events/event-001-kickoff.json",
+    "developedBy": "Oliver Braun",
+    "github": "https://github.com/olli-br",
+    "developmentStart": "2026-04",
+    "currentVersion": "0.1.0",
+    "updateHistory": [
+      {
+        "date": "2026-05-02",
+        "author": "[Oliver Braun]",
+        "changes": "Project initialization"
+      },
+      {
+        "date": "2026-05-07",
+        "author": "[morteza djebeli]",
+        "changes": "write the text for the events"
+      }
+    ]
+  },
+  "id": 5,
+  "date": "2026-04-21T18:00:00",
+  "image": "./assets/images/event-3.svg",
+  "link": "https://eveeno.com/ws0426",
+  "recapLink": "./blog.html?post=erstes-treffen",
+  "location": {
+    "venue": {
+      "de": "StudyFAB by netSWerk e.V., Veranstaltungsraum",
+      "en": "StudyFAB by netSWerk e.V., event room"
+    },
+    "street": "Kesslergasse 2",
+    "postalCode": "97421",
+    "city": "Schweinfurt"
+  },
+  "geo": {
+    "lat": 50.0451,
+    "lng": 10.2338
+  },
+  "title": {
+    "de": "Kick-off KI Netzwerk",
+    "en": "AI Network Kick-off"
+  },
+  "detail": {
+    "description": {
+      "de": "Erstes öffentliches Treffen: Vorstellung der Initiative und Abstimmung der Themen für 2026.",
+      "en": "First public meetup: presenting the initiative and collecting topics for 2026."
+    },
+    "content": {
+      "de": "## Gründungstreffen eines KI-Netzwerks in Schweinfurt\n\n## Warum ein KI-Netzwerk in Schweinfurt?\n\n- **Starke industrielle Basis:** Schweinfurt verfügt über erfahrene Domänenexperten und viele konkrete Anwendungsfelder für KI.\n- **Fehlender Austauschraum:** Ein regelmäßiger, offener Rahmen für praxisnahen KI-Austausch fehlt bislang.\n- **Ziel des Netzwerks:** Erfahrungen teilen, Hemmschwellen abbauen und voneinander lernen.\n- **Praxisfokus:** Reale Use Cases, Best Practices, Tools und Diskussionen.\n- **Wissenstransfer:** Verbindung von Industrie, Hochschule und Entwickler-Community.\n\n## Zielgruppe\n\n- KI-Interessierte und KI-Enthusiasten\n- Industrie- und Domänenexperten\n- Softwareentwickler, Ingenieure und technische Teams\n- Studierende, Forschende und Lehrende\n- Mittelstand, Start-ups und Entscheider in der Region\n\n## Output / Ergebnis\n\n- Gute Vernetzung mit Experten aus Industrie, KMU und Hochschule\n- Know-how-Aufbau durch gemeinsames Lernen - Lernen ist sozial\n- Praxisnahe Impulse für KI in Entwicklung, Engineering und Produktion\n- Austausch zu Werkzeugen, Standards, Erfahrungen und realen Herausforderungen\n- Stärkung der Sichtbarkeit und Zukunftsfähigkeit des Standorts Schweinfurt",
+      "en": "## Founding Meeting of an AI Network in Schweinfurt\n\n## Why an AI Network in Schweinfurt?\n\n- **Strong industrial base:** Schweinfurt has experienced domain experts and many concrete application areas for AI.\n- **Missing exchange space:** A regular, open format for practical AI exchange is still lacking.\n- **Goal of the network:** Share experiences, lower barriers, and learn from one another.\n- **Practical focus:** Real use cases, best practices, tools, and discussions.\n- **Knowledge transfer:** Connecting industry, academia, and the developer community.\n\n## Target Group\n\n- People interested in AI and AI enthusiasts\n- Industry and domain experts\n- Software developers, engineers, and technical teams\n- Students, researchers, and educators\n- SMEs, start-ups, and decision-makers in the region\n\n## Output / Outcome\n\n- Strong networking with experts from industry, SMEs, and academia\n- Know-how building through collaborative learning - learning is social\n- Practical impulses for AI in development, engineering, and production\n- Exchange on tools, standards, experiences, and real-world challenges\n- Strengthening the visibility and future viability of Schweinfurt as a location"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "project": "Ki Netzwerk Schweinfurt",
+    "project": "KI Netzwerk Schweinfurt",
     "pageName": "Startseite · Seiteninhalte",
     "pathInProject": "data/start/start-page.json",
     "developedBy": "Oliver Braun",
@@ -20,7 +20,7 @@
     "en": "AI initiative in Schweinfurt"
   },
   "heroTitle": {
-    "de": "Ki Netzwerk Schweinfurt",
+    "de": "KI Netzwerk Schweinfurt",
     "en": "AI Network Schweinfurt"
   },
   "heroText": {

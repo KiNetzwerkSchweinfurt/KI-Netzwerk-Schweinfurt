@@ -1,6 +1,6 @@
 /*
   ============================================================================
-  Project:      Ki Netzwerk Schweinfurt
+  Project:      KI Netzwerk Schweinfurt
   File:         main.js
   Seite / Rolle: App-Logik, Daten, UI (alle Seiten)
   Projekt-Pfad: assets/js/main.js
@@ -170,6 +170,41 @@
       .join("");
   }
 
+  function renderInitiators() {
+    const eyebrowEl = document.getElementById("about-initiators-eyebrow");
+    const container = document.getElementById("about-initiators-container");
+    if (!container) return;
+    const initiators = state._aboutPageContent?.initiators;
+    if (!Array.isArray(initiators) || !initiators.length) {
+      document.getElementById("about-initiators-section")?.remove();
+      return;
+    }
+    if (eyebrowEl) eyebrowEl.textContent = pickAboutField("initiatorsEyebrow");
+    container.innerHTML = initiators
+      .map((person) => {
+        const bio = person.bio?.[state.lang] || person.bio?.de || "";
+        const role = person.role?.[state.lang] || person.role?.de || "";
+        const linkedinHref = person.linkedin
+          ? person.linkedin.startsWith("http")
+            ? person.linkedin
+            : "https://" + person.linkedin
+          : "";
+        const imgSrc = person.image ? escapeHtml(person.image) : "";
+        const imgAlt = escapeHtml(person.name || "");
+        return `
+        <article class="initiator-card">
+          ${imgSrc ? `<img class="initiator-image" src="${imgSrc}" alt="${imgAlt}" loading="lazy" />` : ""}
+          <div class="initiator-info">
+            <h2 class="initiator-name">${escapeHtml(person.name || "")}</h2>
+            ${role ? `<p class="initiator-role">${escapeHtml(role)}</p>` : ""}
+            <p class="initiator-bio">${escapeHtml(bio)}</p>
+            ${linkedinHref ? `<a class="initiator-linkedin" href="${escapeHtml(linkedinHref)}" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>` : ""}
+          </div>
+        </article>`;
+      })
+      .join("");
+  }
+
   function renderAboutPage() {
     if (!state._aboutPageContent) return;
     const set = (id, text) => {
@@ -190,6 +225,7 @@
     set("about-partners-title", pickAboutField("partnersTitle"));
     set("about-partners-text", pickAboutField("partnersText"));
     renderAboutChipRow(document.getElementById("about-partner-chips"), state._aboutPageContent.partnerChips);
+    renderInitiators();
   }
 
   function getI18n(path) {

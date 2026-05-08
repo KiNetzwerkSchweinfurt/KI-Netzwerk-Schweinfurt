@@ -1,6 +1,6 @@
 /*
   ============================================================================
-  Project:      Ki Netzwerk Schweinfurt
+  Project:      KI Netzwerk Schweinfurt
   File:         styles.css
   Seite / Rolle: Globales Designsystem (alle Seiten)
   Projekt-Pfad: assets/css/styles.css
@@ -20,7 +20,7 @@
 */
 
 /* =========================================================================
-  Ki Netzwerk Schweinfurt — Design System (2026)
+  KI Netzwerk Schweinfurt — Design System (2026)
    Aufbau:
      1. Tokens (Farben, Typografie, Spacing, Radius, Schatten)
      2. Reset / Basis
@@ -2092,6 +2092,90 @@ body.theme-light .hero-network-visual {
   border-color: var(--border-strong);
   color: var(--text-muted);
   font-weight: 500;
+}
+
+/* ---------- Initiator-Block (About) ---------- */
+
+.about-initiators {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: clamp(1.4rem, 3.5vw, 2rem);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(120% 100% at 100% 0%, rgba(45, 212, 191, 0.10), transparent 55%),
+    linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  box-shadow: var(--shadow-md);
+}
+
+.initiator-card {
+  display: grid;
+  grid-template-columns: clamp(180px, 28%, 300px) 1fr;
+  gap: clamp(1rem, 3vw, 2rem);
+  align-items: stretch;
+}
+
+.initiator-image {
+  width: 100%;
+  height: 100%;
+  min-height: clamp(220px, 24vw, 320px);
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.initiator-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.initiator-name {
+  margin: 0;
+  font-size: clamp(1.15rem, 1.8vw + 0.4rem, 1.4rem);
+}
+
+.initiator-role {
+  margin: 0;
+  color: var(--color-primary-strong);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.initiator-bio {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.7;
+  font-size: 0.97rem;
+  white-space: pre-line;
+}
+
+.initiator-linkedin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-primary-strong);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.initiator-linkedin:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .initiator-card {
+    grid-template-columns: 1fr;
+  }
+
+  .initiator-image {
+    max-width: 240px;
+    min-height: 0;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
 }
 
 /* ---------- Detail-Ansichten (Event / Blog) ---------- */

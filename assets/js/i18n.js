@@ -1,6 +1,6 @@
 /*
   ============================================================================
-  Project:      Ki Netzwerk Schweinfurt
+  Project:      KI Netzwerk Schweinfurt
   File:         i18n.js
   Seite / Rolle: Übersetzungen DE / EN (alle Seiten)
   Projekt-Pfad: assets/js/i18n.js
@@ -36,7 +36,7 @@ window.I18N = {
     },
     home: {
       heroLabel: "Initiative für KI in Mainfranken",
-      heroTitle: "Ki Netzwerk Schweinfurt",
+      heroTitle: "KI Netzwerk Schweinfurt",
       heroText:
         "Wir vernetzen Unternehmen, Bildung, Verwaltung und Community rund um praxisnahe Künstliche Intelligenz. Mit offenen Treffen, Workshops und Erfahrungsberichten schaffen wir einen Raum für Austausch, konkrete Projekte und nachhaltigen Wissenstransfer in der Region Schweinfurt.",
       heroCtaPrimary: "Nächstes Event entdecken",
@@ -92,7 +92,7 @@ window.I18N = {
     },
     about: {
       title: "Über uns",
-      intro: "Das Ki Netzwerk Schweinfurt verbindet Menschen rund um praxisnahe KI in der Region.",
+      intro: "Das KI Netzwerk Schweinfurt verbindet Menschen rund um praxisnahe KI in der Region.",
       missionTitle: "Treffen",
       missionText: "Inhalte werden aus about-page.json geladen.",
       targetTitle: "Teilnehmende",

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "project": "Ki Netzwerk Schweinfurt",
+    "project": "KI Netzwerk Schweinfurt",
     "pageName": "Events · Termin-Index (Dateiliste)",
     "pathInProject": "data/event/index.json",
     "developedBy": "Oliver Braun",
@@ -12,15 +12,16 @@
         "date": "2026-05-02",
         "author": "[Oliver Braun]",
         "changes": "Project initialization"
+      },
+      {
+        "date": "2026-05-07",
+        "author": "[morteza djebeli]",
+        "changes": "write the real current events"
       }
     ]
   },
   "files": [
-    "event-kickoff.json",
-    "event-privacy-talk.json",
-    "event-ai-in-practice.json",
-    "event-prompting-workshop.json",
-    "event-ai-manufacturing.json",
-    "event-data-strategy-meetup.json"
+    "event-001-kickoff.json",
+    "event-002-comfyUI-workshop.json"
   ]
 }

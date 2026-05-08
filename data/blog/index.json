@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "project": "Ki Netzwerk Schweinfurt",
+    "project": "KI Netzwerk Schweinfurt",
     "pageName": "Blog · Beitrags-Index (Dateiliste)",
     "pathInProject": "data/blog/index.json",
     "developedBy": "Oliver Braun",
@@ -16,8 +16,6 @@
     ]
   },
   "files": [
-    "post-erstes-treffen.json",
-    "post-ki-im-mittelstand.json",
-    "post-test.json"
+    "post-erstes-treffen.json"
   ]
 }

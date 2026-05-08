@@ -1,6 +1,6 @@
-# Ki Netzwerk Schweinfurt
+# KI Netzwerk Schweinfurt
 
-Offizielle **statische Website** des Ki Netzwerks Schweinfurt — Vernetzung von Unternehmen, Bildung, Verwaltung und Community rund um praxisnahe KI in der Region Mainfranken.
+Offizielle **statische Website** des KI Netzwerks Schweinfurt — Vernetzung von Unternehmen, Bildung, Verwaltung und Community rund um praxisnahe KI in der Region Mainfranken.
 
 Inhalte kommen aus **JSON-Dateien** unter `data/` (Events, Blog, mehrsprachige Seitentexte). Es gibt **kein Build-Tool** und **keine Datenbank**; Pflege erfolgt durch Bearbeiten der Dateien.
 
