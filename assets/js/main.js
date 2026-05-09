@@ -557,9 +557,13 @@
       chatEl.style.removeProperty("--ai-chat-bottom-extra");
       return;
     }
-    const gap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    const layoutH = document.documentElement.clientHeight || window.innerHeight;
+    let gap = Math.max(0, layoutH - vv.height - vv.offsetTop);
+    /* iOS: Leiste über der Tastatur / minimale Lücken — sonst wirkt --ai-chat-keyboard-gap zu klein */
+    if (gap > 24) gap += 16;
     chatEl.style.setProperty("--ai-chat-keyboard-gap", `${gap}px`);
-    chatEl.style.setProperty("--ai-chat-vvh", `${Math.max(0, Math.round(vv.height))}px`);
+    const vvh = Math.max(0, Math.round(vv.height));
+    chatEl.style.setProperty("--ai-chat-vvh", `${vvh}px`);
     if (gap > 56) {
       chatEl.style.setProperty("--ai-chat-bottom-extra", "0px");
     } else {
@@ -709,10 +713,9 @@
     });
     input?.addEventListener("input", () => resizeAiChatInput(input));
     input?.addEventListener("focus", () => {
-      window.requestAnimationFrame(() => {
-        syncAiChatVisualInsets(chat);
-        window.setTimeout(() => syncAiChatVisualInsets(chat), 280);
-      });
+      const sync = () => syncAiChatVisualInsets(chat);
+      window.requestAnimationFrame(sync);
+      [120, 320, 620, 900].forEach((ms) => window.setTimeout(sync, ms));
     });
     resizeAiChatInput(input);
 
@@ -1075,13 +1078,12 @@
 
   async function createAiAssistantCompletion(engine, messages, root, runId) {
     const s = state._assistantSettings;
+    /* WebLLM/MLC: frequency_/presence_penalty führen mit manchen Modellen/Versionen zu Fehlern — nicht mitschicken. */
     const request = {
       messages,
       temperature: clampAiChatNumber(s.temperature, 0, 1, 0.35),
       max_tokens: Math.round(clampAiChatNumber(s.maxTokens, 120, 2048, 320)),
-      top_p: clampAiChatNumber(s.topP, 0.5, 1, 0.92),
-      frequency_penalty: clampAiChatNumber(s.frequencyPenalty, -2, 2, 0),
-      presence_penalty: clampAiChatNumber(s.presencePenalty, -2, 2, 0)
+      top_p: clampAiChatNumber(s.topP, 0.5, 1, 0.92)
     };
 
     const assistantMessage = { role: "assistant", content: "" };
