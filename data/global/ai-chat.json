@@ -9,14 +9,24 @@
         "date": "08.05.2026",
         "author": "Oliver Braun",
         "change": "Add local WebLLM chat assistant."
+      },
+      {
+        "date": "09.05.2026",
+        "author": "Oliver Braun",
+        "change": "UI-Feinschliff: KI-Chat & WebLLM (Einstellungen, Texte)."
       }
     ]
   },
   "defaultSettings": {
     "model": "SmolLM2-135M-Instruct-q0f16-MLC",
     "temperature": 0.35,
+    "topP": 0.92,
+    "frequencyPenalty": 0,
+    "presencePenalty": 0,
     "maxTokens": 320,
     "contextChars": 5200,
+    "historyMessages": 8,
+    "maxQuestionChars": 700,
     "cacheBackend": "indexeddb",
     "useFallback": true,
     "showTech": false,
@@ -143,6 +153,12 @@
       "settingTemperature": "Kreativität",
       "settingMaxTokens": "Antwortlänge",
       "settingContextChars": "Kontextgröße",
+      "settingTopP": "Top-P (Diversität)",
+      "settingFrequencyPenalty": "Wiederholungs-Strafe",
+      "settingPresencePenalty": "Themen-Strafe",
+      "settingHistoryMessages": "Chat-Verlauf (Nachrichten)",
+      "settingMaxQuestionChars": "Max. Fragenlänge",
+      "settingAccent": "Akzentfarbe",
       "settingCacheBackend": "Cache-Speicher",
       "cacheBackendIndexeddb": "IndexedDB (empfohlen bei Cache-Fehlern)",
       "cacheBackendCache": "Browser Cache API",
@@ -247,6 +263,9 @@
       "techLastLatencyMs": "Last answer",
       "techLastPromptChars": "Question size",
       "techLastContextChars": "Context size",
+      "techTopP": "Top-P",
+      "techHistoryMessages": "History (messages)",
+      "techMaxQuestionChars": "Question limit",
       "techFallback": "Fallback",
       "techLastError": "Last technical note",
       "techContextStatus": "Context data",

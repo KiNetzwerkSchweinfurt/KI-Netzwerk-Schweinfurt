@@ -16,7 +16,7 @@
   - 08.05.2026  [Oliver Braun]   Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling.
   - 08.05.2026  [Oliver Braun]   Add local WebLLM chat assistant.
   - 09.05.2026  [Oliver Braun]   Markdown rendering and mobile UX polish.
-
+  - 09.05.2026  [Oliver Braun]   UI-Feinschliff: Layout, Mobile/Safari, KI-Chat & WebLLM.
 
   Independently developed by me.
   ============================================================================
@@ -27,7 +27,22 @@
   const THEME_KEY = "kins-theme";
   const AI_CHAT_SETTINGS_KEY = "kins-ai-chat-settings";
   const AI_ASSISTANT_MODEL = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
-  const FALLBACK_AI_CHAT_SETTINGS = { model: AI_ASSISTANT_MODEL, temperature: 0.35, maxTokens: 320, contextChars: 5200, cacheBackend: "indexeddb", useFallback: true, showTech: false, showDebugData: false, accent: "#14b8a6" };
+  const FALLBACK_AI_CHAT_SETTINGS = {
+    model: AI_ASSISTANT_MODEL,
+    temperature: 0.35,
+    topP: 0.92,
+    frequencyPenalty: 0,
+    presencePenalty: 0,
+    maxTokens: 320,
+    contextChars: 5200,
+    historyMessages: 8,
+    maxQuestionChars: 700,
+    cacheBackend: "indexeddb",
+    useFallback: true,
+    showTech: false,
+    showDebugData: false,
+    accent: "#14b8a6"
+  };
   const DEFAULT_LANG = "de";
   const state = {
     lang: localStorage.getItem(STORAGE_KEY) || DEFAULT_LANG,
@@ -442,12 +457,26 @@
     overlay.addEventListener("animationend", onSweepEnd);
   }
 
+  function syncThemeColorMeta(isLight) {
+    let meta = document.getElementById("theme-color-meta");
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.id = "theme-color-meta";
+      meta.setAttribute("name", "theme-color");
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport?.parentNode) viewport.parentNode.insertBefore(meta, viewport.nextSibling);
+      else document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", isLight ? "#f6f8fb" : "#060a12");
+  }
+
   function applyTheme(theme) {
     const isLight = theme === "light";
     document.body.classList.toggle("theme-light", isLight);
     document.querySelectorAll(".theme-toggle").forEach((toggle) =>
       toggle.classList.toggle("theme-light", isLight)
     );
+    syncThemeColorMeta(isLight);
     syncThemeAria();
   }
 
@@ -631,6 +660,7 @@
       }
       if (open) {
         window.setTimeout(() => {
+          resizeAiChatInput(input);
           input?.focus();
           syncAiChatVisualInsets(chat);
         }, 0);
@@ -711,12 +741,48 @@
     return { ...FALLBACK_AI_CHAT_SETTINGS, ...(state._aiChatContent?.defaultSettings || {}) };
   }
 
+  function clampAiChatNumber(value, min, max, fallback) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  }
+
   function normalizeAiChatSettings(settings) {
     const defaults = getAiChatDefaultSettings();
     const next = { ...defaults, ...(settings || {}) };
     const modelIds = getAiChatModels().map((model) => model.id);
     if (!modelIds.includes(next.model)) next.model = defaults.model;
+
+    next.temperature = clampAiChatNumber(next.temperature, 0, 1, defaults.temperature);
+    next.topP = clampAiChatNumber(next.topP, 0.5, 1, defaults.topP);
+    next.frequencyPenalty = clampAiChatNumber(next.frequencyPenalty, -2, 2, defaults.frequencyPenalty);
+    next.presencePenalty = clampAiChatNumber(next.presencePenalty, -2, 2, defaults.presencePenalty);
+    next.maxTokens = Math.round(clampAiChatNumber(next.maxTokens, 120, 2048, defaults.maxTokens));
+    next.contextChars = Math.round(clampAiChatNumber(next.contextChars, 1800, 9000, defaults.contextChars));
+    next.historyMessages = Math.round(clampAiChatNumber(next.historyMessages, 2, 24, defaults.historyMessages));
+    next.maxQuestionChars = Math.round(clampAiChatNumber(next.maxQuestionChars, 200, 2000, defaults.maxQuestionChars));
+    next.cacheBackend = next.cacheBackend === "cache" ? "cache" : "indexeddb";
+    next.useFallback = Boolean(next.useFallback);
+    next.showTech = Boolean(next.showTech);
+    next.showDebugData = Boolean(next.showDebugData);
+    const accent = String(next.accent || "").trim();
+    next.accent = /^#[0-9A-Fa-f]{6}$/i.test(accent) ? accent.toLowerCase() : defaults.accent;
+
     return next;
+  }
+
+  function formatAiChatValueLabel(key, value) {
+    if (key === "temperature" || key === "topP") return Number(value).toFixed(2);
+    if (key === "frequencyPenalty" || key === "presencePenalty") return Number(value).toFixed(1);
+    return String(value);
+  }
+
+  function syncAiChatSettingValueLabels(root) {
+    const settings = state._assistantSettings;
+    root?.querySelectorAll?.("[data-ai-value-for]")?.forEach((el) => {
+      const key = el.dataset.aiValueFor;
+      if (key && key in settings) el.textContent = formatAiChatValueLabel(key, settings[key]);
+    });
   }
 
   function applyAiChatLabels(root, labels) {
@@ -742,6 +808,7 @@
       submit.setAttribute("aria-label", labels.send || "");
       submit.title = labels.send || "";
     }
+    resizeAiChatInput(input);
   }
 
   function renderAiChatModelOptions(root) {
@@ -800,6 +867,7 @@
     } else {
       state._assistantSettings[key] = control.value;
     }
+    state._assistantSettings = normalizeAiChatSettings(state._assistantSettings);
     if ((key === "model" && state._assistantSettings.model !== previousModel) || key === "cacheBackend") {
       state._assistantEnginePromise = null;
       state._assistantEngine = null;
@@ -812,6 +880,7 @@
   function applyAiChatSettings(root) {
     const chat = root?.querySelector?.(".ai-chat");
     if (!chat) return;
+    state._assistantSettings = normalizeAiChatSettings(state._assistantSettings);
     const settings = state._assistantSettings;
     chat.classList.add("ai-chat--compact", "ai-chat--right");
     chat.style.setProperty("--ai-chat-accent", settings.accent || FALLBACK_AI_CHAT_SETTINGS.accent);
@@ -839,14 +908,22 @@
         control.value = settings[key];
       }
     });
+    const input = root.querySelector("#ai-chat-input");
+    if (input) {
+      const maxQ = Number(settings.maxQuestionChars);
+      input.maxLength = Number.isFinite(maxQ) ? Math.max(100, Math.min(2000, Math.round(maxQ))) : 700;
+    }
+    syncAiChatSettingValueLabels(root);
   }
 
   function resizeAiChatInput(input) {
     if (!input) return;
+    const cs = typeof window !== "undefined" ? window.getComputedStyle(input) : null;
+    const maxPx =
+      cs && cs.maxHeight && cs.maxHeight !== "none" ? Number.parseFloat(cs.maxHeight) || 112 : 112;
     input.style.height = "auto";
-    const maxHeight = 112;
-    input.style.height = `${Math.min(input.scrollHeight, maxHeight)}px`;
-    input.style.overflowY = input.scrollHeight > maxHeight ? "auto" : "hidden";
+    const scroll = input.scrollHeight;
+    input.style.height = `${Math.min(scroll, maxPx)}px`;
   }
 
   function setAiChatBusy(root, busy) {
@@ -933,9 +1010,12 @@
       setAiChatLive(root, labels.thinking, true);
       setAiChatStatus(statusEl, labels.thinking);
 
+      const histN = Math.round(
+        clampAiChatNumber(state._assistantSettings.historyMessages, 2, 24, 8)
+      );
       const messages = [
         { role: "system", content: buildAiAssistantSystemPrompt(contextData.events, contextData.posts) },
-        ...state._assistantMessages.slice(-8).map((entry) => ({
+        ...state._assistantMessages.slice(-histN).map((entry) => ({
           role: entry.role,
           content: entry.content
         }))
@@ -994,10 +1074,14 @@
   }
 
   async function createAiAssistantCompletion(engine, messages, root, runId) {
+    const s = state._assistantSettings;
     const request = {
       messages,
-      temperature: Number(state._assistantSettings.temperature) || 0.35,
-      max_tokens: Number(state._assistantSettings.maxTokens) || 320
+      temperature: clampAiChatNumber(s.temperature, 0, 1, 0.35),
+      max_tokens: Math.round(clampAiChatNumber(s.maxTokens, 120, 2048, 320)),
+      top_p: clampAiChatNumber(s.topP, 0.5, 1, 0.92),
+      frequency_penalty: clampAiChatNumber(s.frequencyPenalty, -2, 2, 0),
+      presence_penalty: clampAiChatNumber(s.presencePenalty, -2, 2, 0)
     };
 
     const assistantMessage = { role: "assistant", content: "" };
@@ -1204,6 +1288,7 @@
     if (!list) return;
     const labels = getAiChatLabels();
     const tech = state._assistantTech;
+    const cfg = state._assistantSettings;
     const rows = [
       [labels.techModel, tech.model],
       [labels.techRuntime, tech.runtime],
@@ -1211,11 +1296,14 @@
       [labels.techAdapter, tech.adapter],
       [labels.techProgress, tech.progress],
       [labels.techDownloadProgress, tech.downloadProgress || "-"],
-      [labels.techCacheBackend, state._assistantSettings.cacheBackend || "indexeddb"],
+      [labels.techCacheBackend, cfg.cacheBackend || "indexeddb"],
       [labels.techLoadMs, formatMs(tech.loadMs)],
       [labels.techLastLatencyMs, formatMs(tech.lastLatencyMs)],
       [labels.techLastPromptChars, `${tech.lastPromptChars} ${labels.chars}`],
       [labels.techLastContextChars, `${tech.lastContextChars} ${labels.chars}`],
+      [labels.techTopP, formatAiChatValueLabel("topP", cfg.topP)],
+      [labels.techHistoryMessages, String(cfg.historyMessages ?? "")],
+      [labels.techMaxQuestionChars, String(cfg.maxQuestionChars ?? "")],
       [labels.techContextStatus, tech.contextStatus || labels.contextNotLoaded],
       [labels.techFallback, tech.fallback ? labels.active : labels.inactive],
       [labels.techLastError, tech.lastError || "-"]
@@ -1240,9 +1328,15 @@
         model: state._assistantSettings.model,
         settings: {
           temperature: state._assistantSettings.temperature,
+          topP: state._assistantSettings.topP,
+          frequencyPenalty: state._assistantSettings.frequencyPenalty,
+          presencePenalty: state._assistantSettings.presencePenalty,
           maxTokens: state._assistantSettings.maxTokens,
           contextChars: state._assistantSettings.contextChars,
-          useFallback: state._assistantSettings.useFallback
+          historyMessages: state._assistantSettings.historyMessages,
+          maxQuestionChars: state._assistantSettings.maxQuestionChars,
+          useFallback: state._assistantSettings.useFallback,
+          accent: state._assistantSettings.accent
         },
         context: {
           builtAt: data.builtAt,
@@ -1581,6 +1675,7 @@
 
     let rafId = 0;
     const pad = 6;
+    const padY = 9;
     const animate = () => {
       ctx.clearRect(0, 0, cssWidth, cssHeight);
 
@@ -1588,7 +1683,7 @@
         p.x += p.vx;
         p.y += p.vy;
         if (p.x < pad || p.x > cssWidth - pad) p.vx *= -1;
-        if (p.y < pad || p.y > cssHeight - pad) p.vy *= -1;
+        if (p.y < padY || p.y > cssHeight - padY) p.vy *= -1;
       });
 
       edges.forEach(([a, b]) => {
