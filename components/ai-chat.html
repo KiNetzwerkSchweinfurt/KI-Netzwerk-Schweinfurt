@@ -1,0 +1,136 @@
+<!--
+  ============================================================================
+  Project:      KI Netzwerk Schweinfurt
+  Component:    AI Chat
+  Projekt-Pfad: components/ai-chat.html
+  Description:  Wiederverwendbares Chat-Fenster fuer den lokalen WebLLM-Assistenten.
+
+  Developed by: Oliver Braun
+  GitHub:       https://github.com/olli-br
+
+  Development Start: April 2026
+  Current Version:   0.1.0
+
+  Update History:
+  - 08.05.2026  [Oliver Braun]   Add local WebLLM chat assistant.
+  - 10.05.2026  [Oliver Braun]   Mobile/light-mode polish, live AI context; only temperature slider, no accent setting.
+
+  Independently developed by me.
+  ============================================================================
+-->
+
+<section class="ai-chat" aria-label="" data-ai-chat>
+  <button class="ai-chat-toggle" type="button" aria-expanded="false" aria-controls="ai-chat-panel" aria-label="" title="">
+    <span class="ai-chat-toggle__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path d="M6.75 18.25 3.5 20.5v-4.2A7.5 7.5 0 0 1 2 11.75C2 7.2 6.25 3.5 11.5 3.5S21 7.2 21 11.75 16.75 20 11.5 20a10.7 10.7 0 0 1-4.75-1.75Z" />
+        <path d="M7.5 11.5h8M7.5 14h5.2" />
+      </svg>
+    </span>
+    <span class="ai-chat-toggle__hint" data-ai-label="button"></span>
+  </button>
+
+  <div class="ai-chat-panel" id="ai-chat-panel" hidden aria-hidden="true">
+    <div class="ai-chat-header">
+      <div class="ai-chat-brand" aria-hidden="true"><span>AI</span></div>
+      <div>
+        <p class="ai-chat-kicker" data-ai-label="kicker"></p>
+        <h2 data-ai-label="title"></h2>
+        <p class="ai-chat-subtitle" data-ai-label="localRuntime"></p>
+      </div>
+      <div class="ai-chat-header-actions">
+        <button class="ai-chat-settings-toggle" type="button" aria-expanded="false" aria-controls="ai-chat-settings" aria-label="">
+          <svg class="ai-chat-settings-toggle__icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+            <path
+              d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.65"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+        <button class="ai-chat-close" type="button" aria-label="">
+          <svg class="ai-chat-close__icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+            <path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="ai-chat-settings" id="ai-chat-settings" hidden aria-hidden="true">
+      <div class="ai-chat-settings__grid">
+        <label class="ai-chat-settings__field--span2">
+          <span data-ai-label="settingModel"></span>
+          <select data-ai-setting="model"></select>
+        </label>
+        <label>
+          <span class="ai-chat-settings__field-head">
+            <span data-ai-label="settingTemperature"></span>
+            <span class="ai-chat-settings__value" data-ai-value-for="temperature" aria-hidden="true"></span>
+          </span>
+          <input type="range" min="0" max="1" step="0.05" data-ai-setting="temperature" />
+        </label>
+        <label>
+          <span data-ai-label="settingMaxTokens"></span>
+          <input type="number" min="120" max="1536" step="20" data-ai-setting="maxTokens" />
+        </label>
+        <label>
+          <span data-ai-label="settingContextChars"></span>
+          <input type="number" min="1800" max="9000" step="200" data-ai-setting="contextChars" />
+        </label>
+        <label>
+          <span data-ai-label="settingHistoryMessages"></span>
+          <input type="number" min="2" max="24" step="1" data-ai-setting="historyMessages" />
+        </label>
+        <label>
+          <span data-ai-label="settingMaxQuestionChars"></span>
+          <input type="number" min="200" max="2000" step="50" data-ai-setting="maxQuestionChars" />
+        </label>
+        <label>
+          <span data-ai-label="settingCacheBackend"></span>
+          <select data-ai-setting="cacheBackend">
+            <option value="indexeddb" data-ai-label="cacheBackendIndexeddb"></option>
+            <option value="cache" data-ai-label="cacheBackendCache"></option>
+          </select>
+        </label>
+      </div>
+      <div class="ai-chat-model-info" data-ai-model-info></div>
+      <div class="ai-chat-settings__checks">
+        <label><input type="checkbox" data-ai-setting="useFallback" /> <span data-ai-label="useFallback"></span></label>
+        <label><input type="checkbox" data-ai-setting="showTech" /> <span data-ai-label="showTech"></span></label>
+        <label><input type="checkbox" data-ai-setting="showDebugData" /> <span data-ai-label="showDebugData"></span></label>
+      </div>
+      <button class="ai-chat-reset" type="button" data-ai-label="resetSettings"></button>
+    </div>
+
+    <div class="ai-chat-metrics" aria-label="">
+      <span data-ai-chip-runtime>WebLLM</span>
+      <span data-ai-chip-webgpu>WebGPU</span>
+      <span data-ai-chip-model></span>
+    </div>
+    <details class="ai-chat-tech">
+      <summary data-ai-label="techSummary"></summary>
+      <dl data-ai-chat-tech></dl>
+    </details>
+    <details class="ai-chat-debug" data-ai-chat-debug hidden>
+      <summary data-ai-label="debugSummary"></summary>
+      <pre data-ai-chat-debug-data></pre>
+    </details>
+    <div class="ai-chat-messages" data-ai-chat-messages></div>
+    <div class="ai-chat-live" data-ai-chat-live hidden></div>
+    <form class="ai-chat-form" data-ai-chat-form>
+      <label class="hidden" for="ai-chat-input" data-ai-label="inputLabel"></label>
+      <textarea id="ai-chat-input" name="message" rows="2" maxlength="2000" required></textarea>
+      <button class="btn btn-primary ai-chat-submit" type="submit" aria-label="">
+        <svg class="ai-chat-submit__send" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 12 20 4l-4.4 16-3.2-6.5L4 12Z" />
+          <path d="M12.4 13.5 20 4" />
+        </svg>
+        <svg class="ai-chat-submit__stop" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect x="7" y="7" width="10" height="10" rx="2" />
+        </svg>
+      </button>
+    </form>
+  </div>
+</section>

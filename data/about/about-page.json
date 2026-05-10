@@ -12,6 +12,11 @@
         "date": "2026-05-02",
         "author": "[Oliver Braun]",
         "changes": "Project initialization"
+      },
+      {
+        "date": "2026-05-08",
+        "author": "[Oliver Braun]",
+        "changes": "Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling."
       }
     ]
   },
@@ -52,14 +57,38 @@
     "en": "The network thrives on diversity. We welcome everyone who wants to explore AI thoughtfully and responsibly—across industries, company sizes and professional backgrounds."
   },
   "participantChips": [
-    { "de": "Führungskräfte & Teamleitungen", "en": "Leaders & team leads" },
-    { "de": "IT, Daten & Softwareentwicklung", "en": "IT, data & software engineering" },
-    { "de": "Produktion, Qualität & Instandhaltung", "en": "Production, quality & maintenance" },
-    { "de": "Marketing, Produkt & Innovation", "en": "Marketing, product & innovation" },
-    { "de": "Verwaltung & öffentlicher Dienst", "en": "Public administration & civil service" },
-    { "de": "Studierende, Forschung & Lehre", "en": "Students, research & teaching" },
-    { "de": "Beraterinnen, Gründer*innen & Selbstständige", "en": "Consultants, founders & freelancers" },
-    { "de": "Alle, die einfach neugierig sind", "en": "Anyone who is simply curious" }
+    {
+      "de": "Führungskräfte & Teamleitungen",
+      "en": "Leaders & team leads"
+    },
+    {
+      "de": "IT, Daten & Softwareentwicklung",
+      "en": "IT, data & software engineering"
+    },
+    {
+      "de": "Produktion, Qualität & Instandhaltung",
+      "en": "Production, quality & maintenance"
+    },
+    {
+      "de": "Marketing, Produkt & Innovation",
+      "en": "Marketing, product & innovation"
+    },
+    {
+      "de": "Verwaltung & öffentlicher Dienst",
+      "en": "Public administration & civil service"
+    },
+    {
+      "de": "Studierende, Forschung & Lehre",
+      "en": "Students, research & teaching"
+    },
+    {
+      "de": "Beraterinnen, Gründer*innen & Selbstständige",
+      "en": "Consultants, founders & freelancers"
+    },
+    {
+      "de": "Alle, die einfach neugierig sind",
+      "en": "Anyone who is simply curious"
+    }
   ],
   "participantsClosing": {
     "de": "Ob du erste Schritte planst oder bereits Projekte skalierst: Du findest Gleichgesinnte, Sparringspartner und oft den einen Tipp, der weiterhilft. Der Eintritt zu unseren öffentlichen Formaten ist in der Regel frei oder wird transparent kommuniziert.",
@@ -74,9 +103,17 @@
     "en": "Partners provide venues, tech, catering or visibility and strengthen transfer between science, business and civil society. We thank everyone who supports the initiative."
   },
   "partnerChips": [
-    { "de": "StudyFAB by netSWerk e.V.", "en": "StudyFAB by netSWerk e.V." },
-    { "de": "Partner B", "en": "Partner B" },
-    { "de": "Partner C", "en": "Partner C" }
+    {
+      "de": "StudyFAB by netSWerk e.V.",
+      "en": "StudyFAB by netSWerk e.V."
+    }
+  ],
+  "partnerLogos": [
+    {
+      "name": "StudyFAB",
+      "src": "./assets/images/StudyFAB_Logo.jpeg",
+      "href": "https://schweinfurt-fabulous.de/schweinfurt-fabulous/studyfab"
+    }
   ],
   "initiatorsEyebrow": {
     "de": "Initiiert, und koordiniert von",

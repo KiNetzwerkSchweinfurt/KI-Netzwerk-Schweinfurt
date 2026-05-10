@@ -1,0 +1,112 @@
+{
+  "de": {
+    "nav": {
+      "home": "Start",
+      "events": "Events",
+      "blog": "Blog",
+      "about": "Über uns",
+      "faq": "FAQ",
+      "contact": "Kontakt"
+    },
+    "theme": {
+      "switchToDark": "Dunkelmodus aktivieren",
+      "switchToLight": "Hellmodus aktivieren"
+    },
+    "common": {
+      "showAll": "Alle anzeigen",
+      "register": "Zur Anmeldung",
+      "details": "Details ansehen",
+      "readMore": "Weiterlesen",
+      "loading": "Lädt...",
+      "noData": "Keine Inhalte gefunden."
+    },
+    "footer": {
+      "tagline": "Miteinander KI gestalten",
+      "events": "Events",
+      "blog": "Blog",
+      "about": "Über uns",
+      "faq": "FAQ",
+      "contact": "Kontakt"
+    },
+    "faq": {
+      "q1": {
+        "question": "Wer kann am Netzwerk teilnehmen?",
+        "answer": "Unternehmen, Studierende, Entwickler, Verwaltung und Interessierte aus Mainfranken sind eingeladen, sich zu vernetzen und auszutauschen."
+      },
+      "q2": {
+        "question": "Wie finde ich das nächste Event?",
+        "answer": "Die aktuellen Termine finden Sie oben auf der Startseite. Weitere Details gibt es auf der Events-Seite."
+      },
+      "q3": {
+        "question": "Welche Themen werden behandelt?",
+        "answer": "Wir konzentrieren uns auf praxisnahe KI-Anwendungen, Datenschutz, verantwortliche Nutzung und regionale Zusammenarbeit."
+      },
+      "q4": {
+        "question": "Wie kann ich selbst aktiv werden?",
+        "answer": "Melden Sie sich als Speaker, Partner oder Teilnehmer – am besten direkt über den Kontaktbereich oder per E-Mail."
+      }
+    },
+    "countdown": {
+      "days": "Tage",
+      "hours": "Std",
+      "minutes": "Min",
+      "seconds": "Sek",
+      "started": "Gestartet"
+    }
+  },
+  "en": {
+    "nav": {
+      "home": "Home",
+      "events": "Events",
+      "blog": "Blog",
+      "about": "About",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "theme": {
+      "switchToDark": "Switch to dark mode",
+      "switchToLight": "Switch to light mode"
+    },
+    "common": {
+      "showAll": "Show all",
+      "register": "Register now",
+      "details": "View details",
+      "readMore": "Read more",
+      "loading": "Loading...",
+      "noData": "No content found."
+    },
+    "footer": {
+      "tagline": "Shaping AI together",
+      "events": "Events",
+      "blog": "Blog",
+      "about": "About",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "faq": {
+      "q1": {
+        "question": "Who can join the network?",
+        "answer": "Companies, students, developers, public institutions and interested people from Mainfranken are invited to connect and exchange ideas."
+      },
+      "q2": {
+        "question": "How do I find the next event?",
+        "answer": "Upcoming dates are listed at the top of the homepage. More details are available on the Events page."
+      },
+      "q3": {
+        "question": "What topics are covered?",
+        "answer": "We focus on practical AI applications, data protection, responsible use and regional collaboration."
+      },
+      "q4": {
+        "question": "How can I get involved?",
+        "answer": "Sign up as a speaker, partner or participant – best via the contact area or by email."
+      }
+    },
+    "countdown": {
+      "days": "Days",
+      "hours": "Hrs",
+      "minutes": "Min",
+      "seconds": "Sec",
+      "started": "Started"
+    }
+  }
+}
