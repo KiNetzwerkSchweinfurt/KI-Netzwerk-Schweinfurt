@@ -12,6 +12,11 @@
         "date": "2026-05-02",
         "author": "[Oliver Braun]",
         "changes": "Project initialization"
+      },
+      {
+        "date": "2026-05-08",
+        "author": "[Oliver Braun]",
+        "changes": "Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling."
       }
     ]
   },
@@ -42,9 +47,9 @@
       "de": "Kurzer Abend mit Rechtsgrundlagen und Checkliste für Pilotprojekte im Mittelstand.",
       "en": "Short evening on legal basics and a checklist for SMB pilots."
     },
-    "content": {
-      "de": "## Inhalt\n\nPraxisnahe Leitlinien zu Datenschutz bei KI-Piloten.",
-      "en": "## Agenda\n\nPractical guidelines for privacy in AI pilots."
+    "contentFile": {
+      "de": "./data/event/events/markdown/event-privacy-talk.de.md",
+      "en": "./data/event/events/markdown/event-privacy-talk.en.md"
     }
   }
 }

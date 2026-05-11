@@ -12,6 +12,11 @@
         "date": "2026-05-02",
         "author": "[Oliver Braun]",
         "changes": "Project initialization"
+      },
+      {
+        "date": "2026-05-08",
+        "author": "[Oliver Braun]",
+        "changes": "Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling."
       }
     ]
   },
@@ -42,9 +47,9 @@
       "de": "",
       "en": ""
     },
-    "content": {
-      "de": "",
-      "en": ""
+    "contentFile": {
+      "de": "./data/event/events/markdown/example-event.de.md",
+      "en": "./data/event/events/markdown/example-event.en.md"
     }
   }
 }

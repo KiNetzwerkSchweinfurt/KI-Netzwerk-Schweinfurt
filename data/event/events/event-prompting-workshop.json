@@ -12,6 +12,11 @@
         "date": "2026-05-02",
         "author": "[Oliver Braun]",
         "changes": "Project initialization"
+      },
+      {
+        "date": "2026-05-08",
+        "author": "[Oliver Braun]",
+        "changes": "Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling."
       }
     ]
   },
@@ -41,9 +46,9 @@
       "de": "Hands-on Session zu effektiven Prompts für Teams.",
       "en": "Hands-on session for better team prompting."
     },
-    "content": {
-      "de": "## Fokus\n\nÜbungen zu Struktur, Rollen und iterativer Prompt-Verbesserung.",
-      "en": "## Focus\n\nExercises for structure, role prompts and iterative refinement."
+    "contentFile": {
+      "de": "./data/event/events/markdown/event-prompting-workshop.de.md",
+      "en": "./data/event/events/markdown/event-prompting-workshop.en.md"
     }
   }
 }

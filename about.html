@@ -15,6 +15,9 @@
 
   Update History:
   - 02.05.2026  [Oliver Braun]   Project initialization
+  - 08.05.2026  [Oliver Braun]   Polish responsive UI and layout consistency, including updated JSON content structure and Markdown-based content handling.
+  - 09.05.2026  [Oliver Braun]   Markdown rendering and mobile UX polish.
+  - 10.05.2026  [Oliver Braun]   Mobile/light-mode polish, viewport main height, live AI context.
 
   This project was independently developed and coded by me.
   Feel free to learn from the code, but please keep the attribution.
@@ -25,7 +28,39 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <script>
+      (function () {
+        var lk = "kins-language";
+        var storedLang = localStorage.getItem(lk);
+        function pickLang() {
+          if (storedLang === "de" || storedLang === "en") return storedLang;
+          var list =
+            typeof navigator.languages !== "undefined" && navigator.languages.length
+              ? Array.prototype.slice.call(navigator.languages)
+              : [navigator.language || ""];
+          for (var i = 0; i < list.length; i++) {
+            var t = String(list[i]).toLowerCase();
+            if (t.indexOf("de") === 0) return "de";
+            if (t.indexOf("en") === 0) return "en";
+          }
+          return "de";
+        }
+        document.documentElement.lang = pickLang();
+        var tk = "kins-theme";
+        var storedTheme = localStorage.getItem(tk);
+        if (storedTheme !== "light" && storedTheme !== "dark" && window.matchMedia) {
+          document.documentElement.style.colorScheme = window.matchMedia("(prefers-color-scheme: light)").matches
+            ? "light"
+            : "dark";
+        }
+      })();
+    </script>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=overlays-content"
+    />
+    <meta id="theme-color-meta" name="theme-color" content="#060a12" />
     <title>Über uns | KI Netzwerk Schweinfurt</title>
     <meta
       name="description"
@@ -38,24 +73,23 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./assets/css/styles.css" />
-    <script defer src="./assets/js/i18n.js"></script>
     <script defer src="./assets/js/main.js"></script>
   </head>
   <body data-page="about">
     <div id="site-header"></div>
 
     <main class="page-main about-page container">
-      <section class="about-initiators fade-in" id="about-initiators-section">
-        <p class="about-eyebrow" id="about-initiators-eyebrow"></p>
-        <div id="about-initiators-container"></div>
-      </section>
-
       <header class="about-hero fade-in">
         <p class="about-eyebrow" id="about-eyebrow"></p>
         <h1 class="about-title" id="about-title"></h1>
         <p class="about-subtitle" id="about-subtitle"></p>
         <p class="about-intro" id="about-intro"></p>
       </header>
+
+      <section class="about-initiators fade-in" id="about-initiators-section">
+        <p class="about-eyebrow" id="about-initiators-eyebrow"></p>
+        <div id="about-initiators-container"></div>
+      </section>
 
       <section class="about-panel fade-in" aria-labelledby="about-meeting-title">
         <h2 class="about-panel__title" id="about-meeting-title"></h2>
@@ -73,6 +107,11 @@
       <section class="about-panel about-panel--partners fade-in" aria-labelledby="about-partners-title">
         <h2 class="about-panel__title" id="about-partners-title"></h2>
         <p class="about-panel__text" id="about-partners-text"></p>
+        <div id="about-partner-logos" class="about-partner-logos">
+          <a class="about-partner-logo" href="https://schweinfurt-fabulous.de/schweinfurt-fabulous/studyfab" target="_blank" rel="noopener noreferrer">
+            <img src="./assets/images/StudyFAB_Logo.png" alt="StudyFAB" loading="lazy" />
+          </a>
+        </div>
         <div id="about-partner-chips" class="about-chip-row about-chip-row--muted"></div>
       </section>
     </main>

@@ -1,0 +1,320 @@
+{
+  "_meta": {
+    "project": "KI Netzwerk Schweinfurt",
+    "pageName": "Global · AI Chat",
+    "pathInProject": "data/global/ai-chat.json",
+    "currentVersion": "0.1.0",
+    "updateHistory": [
+      {
+        "date": "08.05.2026",
+        "author": "Oliver Braun",
+        "change": "Add local WebLLM chat assistant."
+      },
+      {
+        "date": "09.05.2026",
+        "author": "Oliver Braun",
+        "change": "UI-Feinschliff: KI-Chat & WebLLM (Einstellungen, Texte)."
+      },
+      {
+        "date": "10.05.2026",
+        "author": "Oliver Braun",
+        "change": "KI-Chat: fehlende deutsche Technik-Labels (Top-P, Verlauf, Limit); EN-Einstellungs-Texte ergänzt."
+      },
+      {
+        "date": "10.05.2026",
+        "author": "Oliver Braun",
+        "change": "KI-Kontext: vor jeder Antwort frisch per HTTP (JSON, Events/Blog, HTML-Auszüge); contextHtmlPages."
+      },
+      {
+        "date": "10.05.2026",
+        "author": "Oliver Braun",
+        "change": "Einstellungen: nur Temperatur-Regler; Top-P fest aus defaultSettings; Straf-Parameter ohne UI."
+      },
+      {
+        "date": "10.05.2026",
+        "author": "Oliver Braun",
+        "change": "HTML-Kontext: Same-Origin-Link-Crawl statt fester contextHtmlPages-Liste."
+      },
+      {
+        "date": "10.05.2026",
+        "author": "Oliver Braun",
+        "change": "KI-Chat: Akzentfarben-Einstellung entfernt."
+      },
+      {
+        "date": "10.05.2026",
+        "author": "Oliver Braun",
+        "change": "Crawler: parallel + Session-TTL-Cache; Top-P/Strafen aus defaultSettings entfernt (Konstanten im Code)."
+      }
+    ]
+  },
+  "defaultSettings": {
+    "model": "SmolLM2-135M-Instruct-q0f16-MLC",
+    "temperature": 0.35,
+    "maxTokens": 320,
+    "contextChars": 5200,
+    "historyMessages": 6,
+    "maxQuestionChars": 700,
+    "cacheBackend": "indexeddb",
+    "useFallback": true,
+    "showTech": false,
+    "showDebugData": false
+  },
+  "webLlmModuleUrls": [
+    "https://esm.run/@mlc-ai/web-llm",
+    "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/+esm"
+  ],
+  "models": [
+    {
+      "id": "SmolLM2-135M-Instruct-q0f16-MLC",
+      "label": "SmolLM2 135M · kleinste Option",
+      "size": "135M",
+      "speed": {
+        "de": "sehr schnell",
+        "en": "very fast"
+      },
+      "memory": {
+        "de": "sehr niedriger Speicherbedarf",
+        "en": "very low memory"
+      },
+      "bestFor": {
+        "de": "Beste Option, wenn Downloads oder Browser-Cache gerade Probleme machen. Antworten sind einfacher.",
+        "en": "Best option when downloads or browser cache fail. Answers are simpler."
+      }
+    },
+    {
+      "id": "SmolLM2-360M-Instruct-q4f16_1-MLC",
+      "label": "SmolLM2 360M",
+      "size": "360M",
+      "speed": {
+        "de": "sehr schnell",
+        "en": "very fast"
+      },
+      "memory": {
+        "de": "niedriger Speicherbedarf",
+        "en": "low memory"
+      },
+      "bestFor": {
+        "de": "Guter Kompromiss, wenn 135M zu schwach ist, aber Qwen noch nicht lädt.",
+        "en": "Good compromise when 135M is too weak but Qwen still does not load."
+      }
+    },
+    {
+      "id": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+      "label": "Qwen2.5 0.5B",
+      "size": "0.5B",
+      "speed": {
+        "de": "sehr schnell",
+        "en": "very fast"
+      },
+      "memory": {
+        "de": "niedriger Speicherbedarf",
+        "en": "low memory"
+      },
+      "bestFor": {
+        "de": "Schnelle Antworten auf Website-Fragen und schwächere Geräte.",
+        "en": "Fast answers about the website and weaker devices."
+      }
+    },
+    {
+      "id": "TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC-1k",
+      "label": "TinyLlama 1.1B · 1k",
+      "size": "1.1B",
+      "speed": {
+        "de": "mittel",
+        "en": "medium"
+      },
+      "memory": {
+        "de": "mittlerer Speicherbedarf",
+        "en": "medium memory"
+      },
+      "bestFor": {
+        "de": "Kleiner Kontext, aber oft robust auf Low-Resource-Geräten.",
+        "en": "Small context, but often robust on low-resource devices."
+      }
+    },
+    {
+      "id": "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+      "label": "Llama 3.2 1B",
+      "size": "1B",
+      "speed": {
+        "de": "schnell",
+        "en": "fast"
+      },
+      "memory": {
+        "de": "mittlerer Speicherbedarf",
+        "en": "medium memory"
+      },
+      "bestFor": {
+        "de": "Etwas bessere Antworten, wenn das Gerät genug WebGPU-Speicher hat.",
+        "en": "Slightly stronger answers when the device has enough WebGPU memory."
+      }
+    },
+    {
+      "id": "Phi-3.5-mini-instruct-q4f16_1-MLC",
+      "label": "Phi 3.5 mini",
+      "size": "mini",
+      "speed": {
+        "de": "langsamer",
+        "en": "slower"
+      },
+      "memory": {
+        "de": "höherer Speicherbedarf",
+        "en": "higher memory"
+      },
+      "bestFor": {
+        "de": "Ausführlichere Antworten auf stärkeren Geräten.",
+        "en": "More detailed answers on stronger devices."
+      }
+    }
+  ],
+  "labels": {
+    "de": {
+      "button": "Assistent öffnen",
+      "kicker": "Lokales WebLLM",
+      "title": "KI-Assistent",
+      "localRuntime": "Läuft lokal in deinem Browser mit WebLLM. Chatdaten werden nicht an einen Server gesendet.",
+      "close": "Chat schließen",
+      "settings": "WebLLM einstellen",
+      "settingModel": "Modell",
+      "settingTemperature": "Kreativität",
+      "settingMaxTokens": "Antwortlänge",
+      "settingContextChars": "Kontextgröße",
+      "settingTopP": "Top-P (Diversität)",
+      "settingFrequencyPenalty": "Wiederholungs-Strafe",
+      "settingPresencePenalty": "Themen-Strafe",
+      "settingHistoryMessages": "Chat-Verlauf (Nachrichten)",
+      "settingMaxQuestionChars": "Max. Fragenlänge",
+      "settingCacheBackend": "Cache-Speicher",
+      "cacheBackendIndexeddb": "IndexedDB (empfohlen bei Cache-Fehlern)",
+      "cacheBackendCache": "Browser Cache API",
+      "useFallback": "Lokalen Fallback nutzen",
+      "showTech": "Technik anzeigen",
+      "showDebugData": "Debugdaten anzeigen",
+      "resetSettings": "Einstellungen zurücksetzen",
+      "metricsLabel": "Technische Chat-Details",
+      "techSummary": "Technik & Berechnung",
+      "debugSummary": "Debugdaten",
+      "debugNotReady": "Noch keine Frage gestellt. Debugdaten werden nach der ersten Anfrage angezeigt.",
+      "inputLabel": "Deine Frage",
+      "placeholder": "Frag zum Netzwerk, zu Events oder zur Teilnahme...",
+      "send": "Senden",
+      "stop": "Berechnung beenden",
+      "greeting": "Hallo, ich beantworte Fragen zum KI Netzwerk Schweinfurt auf Basis der Inhalte dieser Website.",
+      "privacy": "Läuft lokal in deinem Browser. Das Modell wird einmalig geladen und kann kurz dauern.",
+      "loading": "Lokales KI-Modell wird geladen...",
+      "loadingContext": "Website-Kontext wird vorbereitet...",
+      "downloadPreparing": "Modelldownload wird vorbereitet...",
+      "downloadingModel": "Modelldaten werden heruntergeladen",
+      "thinking": "Ich denke nach...",
+      "completed": "WebLLM-Antwort abgeschlossen",
+      "canceling": "Berechnung wird beendet...",
+      "cancelled": "Berechnung beendet",
+      "streamFallback": "Streaming nicht verfügbar, normale Antwort wird berechnet...",
+      "webgpuMissing": "Dieser Browser stellt kein WebGPU bereit. Bitte öffne die Seite in einer aktuellen Chrome-, Edge- oder Safari-Version über HTTPS oder localhost.",
+      "modelDownloadError": "Die Modelldaten konnten nicht vollständig heruntergeladen oder gespeichert werden. Ich nutze vorerst die lokale Website-Suche. Falls es weiter passiert: Cache-Speicher auf IndexedDB stellen, Seite neu laden und nochmal versuchen.",
+      "fallback": "WebLLM ist gerade nicht verfügbar. Ich antworte mit einer lokalen Kontextsuche aus den Website-Daten.",
+      "error": "Entschuldigung, das lokale KI-Modell konnte gerade nicht antworten.",
+      "technicalNotice": "Technischer Hinweis",
+      "techModel": "Modell",
+      "techRuntime": "Laufzeit",
+      "techWebgpu": "WebGPU",
+      "techAdapter": "GPU-Adapter",
+      "techProgress": "Ladestatus",
+      "techDownloadProgress": "Download",
+      "techCacheBackend": "Cache-Speicher",
+      "techLoadMs": "Modell-Ladezeit",
+      "techLastLatencyMs": "Letzte Antwort",
+      "techLastPromptChars": "Fragegröße",
+      "techLastContextChars": "Kontextgröße",
+      "techTemperature": "Temperatur",
+      "techTopP": "Top-P (Diversität)",
+      "techFrequencyPenalty": "Wiederholungs-Strafe",
+      "techPresencePenalty": "Themen-Strafe",
+      "techHistoryMessages": "Chat-Verlauf (Nachrichten)",
+      "techMaxQuestionChars": "Fragenlimit",
+      "techFallback": "Fallback",
+      "techLastError": "Letzter Technikhinweis",
+      "techContextStatus": "Kontextdaten",
+      "chars": "Zeichen",
+      "active": "aktiv",
+      "inactive": "aus",
+      "contextNotLoaded": "noch nicht geladen",
+      "contextLoaded": "geladen",
+      "systemContextLive": "Der folgende Website-Kontext wurde soeben per HTTP von dieser Installation geladen (JSON, Event-/Blog-Dateien und gekürzter Klartext aus verlinkten HTML-Seiten derselben Website, automatisch per internem Link-Crawl). Er steht nicht fest im Modell."
+    },
+    "en": {
+      "button": "Open assistant",
+      "kicker": "Local WebLLM",
+      "title": "AI assistant",
+      "localRuntime": "Runs locally in your browser with WebLLM. No chat data is sent to a server.",
+      "close": "Close chat",
+      "settings": "Configure WebLLM",
+      "settingModel": "Model",
+      "settingTemperature": "Creativity",
+      "settingMaxTokens": "Answer length",
+      "settingContextChars": "Context size",
+      "settingTopP": "Top-P (diversity)",
+      "settingFrequencyPenalty": "Frequency penalty",
+      "settingPresencePenalty": "Presence penalty",
+      "settingHistoryMessages": "Chat history (messages)",
+      "settingMaxQuestionChars": "Max. question length",
+      "settingCacheBackend": "Cache storage",
+      "cacheBackendIndexeddb": "IndexedDB (recommended for cache errors)",
+      "cacheBackendCache": "Browser Cache API",
+      "useFallback": "Use local fallback",
+      "showTech": "Show technical details",
+      "showDebugData": "Show debug data",
+      "resetSettings": "Reset settings",
+      "metricsLabel": "Technical chat details",
+      "techSummary": "Technical details",
+      "debugSummary": "Debug data",
+      "debugNotReady": "No question yet. Debug data is shown after the first request.",
+      "inputLabel": "Your question",
+      "placeholder": "Ask about the network, events or participation...",
+      "send": "Send",
+      "stop": "Stop generation",
+      "greeting": "Hi, I can answer questions about the AI Network Schweinfurt using this website's content.",
+      "privacy": "Runs locally in your browser. The model is downloaded once and may take a moment.",
+      "loading": "Loading local AI model...",
+      "loadingContext": "Preparing website context...",
+      "downloadPreparing": "Preparing model download...",
+      "downloadingModel": "Downloading model data",
+      "thinking": "Thinking...",
+      "completed": "WebLLM answer completed",
+      "canceling": "Stopping generation...",
+      "cancelled": "Generation stopped",
+      "streamFallback": "Streaming is unavailable, calculating a regular answer...",
+      "webgpuMissing": "This browser does not provide WebGPU. Please open the page in a current Chrome, Edge or Safari version via HTTPS or localhost.",
+      "modelDownloadError": "The model data could not be fully downloaded or stored. I am using the local website search for now. If this keeps happening: set cache storage to IndexedDB, reload the page and try again.",
+      "fallback": "WebLLM is currently unavailable. I am answering with a local website-context fallback.",
+      "error": "Sorry, the local AI model could not answer right now.",
+      "technicalNotice": "Technical note",
+      "techModel": "Model",
+      "techRuntime": "Runtime",
+      "techWebgpu": "WebGPU",
+      "techAdapter": "GPU adapter",
+      "techProgress": "Load status",
+      "techDownloadProgress": "Download",
+      "techCacheBackend": "Cache storage",
+      "techLoadMs": "Model load time",
+      "techLastLatencyMs": "Last answer",
+      "techLastPromptChars": "Question size",
+      "techLastContextChars": "Context size",
+      "techTemperature": "Temperature",
+      "techTopP": "Top-P",
+      "techFrequencyPenalty": "Frequency penalty",
+      "techPresencePenalty": "Presence penalty",
+      "techHistoryMessages": "History (messages)",
+      "techMaxQuestionChars": "Question limit",
+      "techFallback": "Fallback",
+      "techLastError": "Last technical note",
+      "techContextStatus": "Context data",
+      "chars": "characters",
+      "active": "active",
+      "inactive": "off",
+      "contextNotLoaded": "not loaded yet",
+      "contextLoaded": "loaded",
+      "systemContextLive": "The website context below was just fetched over HTTP from this deployment (JSON, event and blog files, and trimmed plain text from same-site HTML pages discovered via internal links). It is not baked into the model weights."
+    }
+  }
+}
