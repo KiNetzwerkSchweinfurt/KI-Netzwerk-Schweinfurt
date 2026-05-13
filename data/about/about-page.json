@@ -3,8 +3,8 @@
     "project": "KI Netzwerk Schweinfurt",
     "pageName": "Über uns · Seiteninhalte",
     "pathInProject": "data/about/about-page.json",
-    "developedBy": "Oliver Braun",
-    "github": "https://github.com/olli-br",
+    "developedBy": ["Oliver Braun", "Morteza Djebeli"],
+    "github": ["https://github.com/olli-br", "https://github.com/MoriDj"],
     "developmentStart": "2026-04",
     "currentVersion": "0.1.0",
     "updateHistory": [
@@ -41,11 +41,11 @@
     "en": "How our meetups work"
   },
   "meetingLead": {
-    "de": "Regelmäßig treffen wir uns in lockerer Atmosphäre—abends oder nachmittags, meist in zentraler Lage in Schweinfurt. Jede Session hat ein klares Thema, bleibt aber genug Raum für Fragen und Diskussion.",
-    "en": "We meet regularly in a relaxed setting—often evenings or afternoons, usually at a central venue in Schweinfurt. Each session has a clear topic, with enough room for questions and discussion."
+    "de": "Wir treffen uns regelmäßig ca. alle 6 Wochen in lockerer Atmosphäre, oft abends und meist an einem zentralen Ort in Schweinfurt. Jede Session hat ein klares Thema und lässt gleichzeitig genug Raum für Fragen und Diskussion.",
+    "en": "We meet regularly every 6 weeks in a relaxed setting—often evenings, usually at a central venue in Schweinfurt. Each session has a clear topic, with enough room for questions and discussion."
   },
   "meetingBody": {
-    "de": "Typischer Ablauf: Kurze Begrüßung und Vorstellung des Abends, dann ein Impuls—z. B. Vortrag, Lightning Talk oder Erfahrungsbericht aus der Praxis. Im Anschluss folgen offene Fragerunden, thematische Tische oder Hands-on-Übungen, je nach Format.\n\nZwischen den Programmpunkten ist Zeit für Kaffee, Snacks und vor allem für Gespräche neben der Bühne. Wer möchte, kann Projekte, Stellenanzeigen oder Aufrufe kurz vorstellen; wir moderieren die Zeit fair.\n\nDu musst kein Experte sein: Neugier und Respekt reichen. Inhalte werden, wenn möglich, so gewählt, dass Einsteigerinnen und Fortgeschrittene etwas mitnehmen—von Grundlagen über Datenschutz bis zu MLOps und Produktions-KI.",
+    "de": "Typischer Ablauf: eine kurze Begrüßung und Einordnung des Abends, dann ein Impuls - zum Beispiel ein Vortrag, ein Lightning Talk oder ein Erfahrungsbericht aus der Praxis. Danach folgen offene Fragerunden, Thementische oder Hands-on-Übungen, je nach Format.\n\nZwischen den Programmpunkten ist Zeit für Kaffee, Snacks und vor allem für Gespräche abseits der Bühne. Wer möchte, kann kurz ein Projekt, eine Rolle oder einen Aufruf zur Zusammenarbeit vorstellen; wir achten auf eine faire Zeitverteilung.\n\nDu musst kein Experte sein: Neugier und Respekt reichen. Wir gestalten die Inhalte so, dass Einsteigerinnen und Fortgeschrittene gleichermaßen etwas mitnehmen - von Grundlagen und Datenschutz bis zu MLOps und KI in der Produktion.",
     "en": "Typical flow: a short welcome and outline, then an impulse—talk, lightning talk or a practitioner story. After that we run open Q&A, themed tables or hands-on exercises, depending on the format.\n\nBetween segments there is time for coffee, snacks and especially hallway conversations. Anyone may briefly pitch a project, role or call for collaboration; we keep time fair.\n\nYou do not need to be an expert: curiosity and respect are enough. We aim for content that works for newcomers and advanced practitioners alike—from basics and privacy to MLOps and AI in production."
   },
   "participantsTitle": {

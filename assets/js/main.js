@@ -27,6 +27,7 @@
   const STORAGE_KEY = "kins-language";
   const THEME_KEY = "kins-theme";
   const AI_CHAT_SETTINGS_KEY = "kins-ai-chat-settings";
+  const AI_ASSISTANT_ENABLED = false;
   const AI_ASSISTANT_MODEL = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
   /* Engine-Konstanten (kein UI-Regler — stabilere Inferenz auf kleinen Modellen) */
   const AI_CHAT_TOP_P = 0.92;
@@ -143,7 +144,7 @@
     highlightActiveNav();
     setFooterYear();
     await runPageScript();
-    await initAiChatAssistant();
+    if (AI_ASSISTANT_ENABLED) await initAiChatAssistant();
     console.log("Page script run");
   }
 
@@ -176,19 +177,26 @@
     if (footerSlot) {
       footerSlot.innerHTML = await fetchText("./components/footer.html");
     }
-    if (!aiChatSlot) {
-      aiChatSlot = document.createElement("div");
-      aiChatSlot.id = "ai-chat-root";
-      document.body.appendChild(aiChatSlot);
+    if (AI_ASSISTANT_ENABLED) {
+      if (!aiChatSlot) {
+        aiChatSlot = document.createElement("div");
+        aiChatSlot.id = "ai-chat-root";
+        document.body.appendChild(aiChatSlot);
+      }
+      state.components.aiChat = await fetchText("./components/ai-chat.html");
+      aiChatSlot.innerHTML = state.components.aiChat;
+    } else if (aiChatSlot) {
+      aiChatSlot.innerHTML = "";
+      aiChatSlot.remove();
+      aiChatSlot = null;
+      state.components.aiChat = "";
     }
-    state.components.aiChat = await fetchText("./components/ai-chat.html");
-    aiChatSlot.innerHTML = state.components.aiChat;
     state.components.eventCard = await fetchText("./components/event-card.html");
     state.components.blogCard = await fetchText("./components/blog-card.html");
 
     const headerMounted = !!(headerSlot?.querySelector?.(".site-header") || document.querySelector(".site-header"));
     const cardsLoaded = Boolean(state.components.eventCard && state.components.blogCard);
-    const aiChatLoaded = Boolean(aiChatSlot.querySelector?.(".ai-chat"));
+    const aiChatLoaded = !AI_ASSISTANT_ENABLED || Boolean(aiChatSlot?.querySelector?.(".ai-chat"));
     if (!headerMounted || !cardsLoaded || !aiChatLoaded) showNeedsServerBanner();
   }
 
@@ -371,13 +379,14 @@
 
   async function loadPageTextContent() {
     console.log("Loading page text content");
+    const aiChatPromise = AI_ASSISTANT_ENABLED ? fetchJson("./data/global/ai-chat.json") : Promise.resolve(null);
     const [homeData, aboutData, eventsData, blogData, globalData, aiChatData] = await Promise.all([
       fetchJson("./data/home/home-page.json"),
       fetchJson("./data/about/about-page.json"),
       fetchJson("./data/event/events-page.json"),
       fetchJson("./data/blog/blog-page.json"),
       fetchJson("./data/global/global.json"),
-      fetchJson("./data/global/ai-chat.json")
+      aiChatPromise
     ]);
     console.log("Fetched data:", { homeData, aboutData, eventsData, blogData, globalData, aiChatData });
     state._homePageContent = homeData || null;
@@ -386,7 +395,9 @@
     state._blogPageContent = blogData || null;
     state._globalData = globalData || null;
     state._aiChatContent = aiChatData || null;
-    state._assistantSettings = loadAiChatSettings();
+    if (AI_ASSISTANT_ENABLED) {
+      state._assistantSettings = loadAiChatSettings();
+    }
   }
 
   function applyTranslations() {
@@ -414,7 +425,7 @@
         applyTranslations();
         wireLanguageSwitch();
         await runPageScript();
-        await initAiChatAssistant();
+        if (AI_ASSISTANT_ENABLED) await initAiChatAssistant();
       });
     });
   }
@@ -683,6 +694,12 @@
   }
 
   async function initAiChatAssistant() {
+    if (!AI_ASSISTANT_ENABLED) {
+      const root = document.getElementById("ai-chat-root");
+      if (root) root.remove();
+      return;
+    }
+
     if (typeof state._aiChatViewportUnbind === "function") {
       try {
         state._aiChatViewportUnbind();

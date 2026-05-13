@@ -8,7 +8,7 @@ Die Inhalte (Events, Blogbeiträge, Seitentexte, UI-Strings) liegen in **JSON-Da
 |--|--|
 | **Version** | 0.1.0 (Beta) |
 | **Entwicklung** | seit April 2026 |
-| **Entwickler** | Oliver Braun — [github.com/olli-br](https://github.com/olli-br) |
+| **Entwickler** | Oliver Braun — [github.com/olli-br](https://github.com/olli-br) · Morteza Djebeli — [github.com/MoriDj](https://github.com/MoriDj) |
 | **Initiative** | Morteza Djebeli Sinaki (Initiator) |
 | **Kontakt** | ki.netzwerk.schweinfurt@gmail.com |
 
@@ -443,4 +443,4 @@ Vor dem Deployment empfiehlt sich:
 
 ---
 
-*Projekt eigenständig entwickelt von Oliver Braun. Code gerne zum Lernen nutzen — bitte die Attribution in den Dateiköpfen und in `_meta` respektieren.*
+*Projekt entwickelt von Oliver Braun ([github.com/olli-br](https://github.com/olli-br)) und Morteza Djebeli ([github.com/MoriDj](https://github.com/MoriDj)). Code gerne zum Lernen nutzen — bitte die Attribution in den Dateiköpfen und in `_meta` respektieren.*
