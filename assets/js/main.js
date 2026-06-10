@@ -81,6 +81,7 @@
     _postsData: null,
     _homePageContent: null,
     _aboutPageContent: null,
+    _aboutPageMarkdown: null,
     _eventsPageContent: null,
     _blogPageContent: null,
     _globalData: null,
@@ -205,7 +206,7 @@
     if (page === "home") await renderHomePage();
     if (page === "events") await renderEventsPage();
     if (page === "blog") await renderBlogPage();
-    if (page === "about") renderAboutPage();
+    if (page === "about") await renderAboutPage();
     initScrollReveal();
     initFaqAccordion();
   }
@@ -331,25 +332,114 @@
       .join("");
   }
 
-  function renderAboutPage() {
+  function normalizeMarkdownSectionKey(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s-]/gu, "")
+      .replace(/\s+/g, " ");
+  }
+
+  function parseMarkdownSections(markdown) {
+    const lines = String(markdown || "").replace(/\r\n/g, "\n").split("\n");
+    const sections = {};
+    let currentKey = "";
+    let buffer = [];
+
+    const flush = () => {
+      if (!currentKey) return;
+      sections[currentKey] = buffer.join("\n").trim();
+    };
+
+    for (const line of lines) {
+      const match = line.match(/^##\s+(.+?)\s*$/);
+      if (match) {
+        flush();
+        currentKey = normalizeMarkdownSectionKey(match[1]);
+        buffer = [];
+        continue;
+      }
+      if (currentKey) buffer.push(line);
+    }
+
+    flush();
+    return sections;
+  }
+
+  async function loadAboutMarkdownSections(opts) {
+    const force = Boolean(opts && opts.force);
+    const fileRef = state._aboutPageContent?.contentFile;
+    if (!fileRef || typeof fileRef !== "object") return {};
+    const path = fileRef[state.lang] || fileRef.de || "";
+    if (!path) return {};
+    const cacheKey = `${state.lang}:${path}`;
+    if (!force && state._aboutPageMarkdown?.key === cacheKey) {
+      return state._aboutPageMarkdown.sections;
+    }
+    const markdown = await fetchText(path, { fresh: force });
+    const sections = parseMarkdownSections(markdown);
+    state._aboutPageMarkdown = { key: cacheKey, sections };
+    return sections;
+  }
+
+  async function renderAboutMarkdownSection(el, sections, key, fallbackText) {
+    if (!el) return;
+    const markdown = sections?.[normalizeMarkdownSectionKey(key)];
+    if (markdown && markdown.trim()) {
+      await renderMarkdownInto(el, markdown.trim());
+      return;
+    }
+    el.textContent = fallbackText || "";
+  }
+
+  async function renderAboutPage() {
     if (!state._aboutPageContent) return;
+    const sections = await loadAboutMarkdownSections();
     const set = (id, text) => {
       const node = document.getElementById(id);
       if (node) node.textContent = text || "";
     };
     set("about-eyebrow", pickAboutField("eyebrow"));
     set("about-title", pickAboutField("title"));
-    set("about-subtitle", pickAboutField("subtitle"));
-    set("about-intro", pickAboutField("intro"));
-    set("about-meeting-title", pickAboutField("meetingTitle"));
-    set("about-meeting-lead", pickAboutField("meetingLead"));
-    set("about-meeting-body", pickAboutField("meetingBody"));
+    await renderAboutMarkdownSection(
+      document.getElementById("about-subtitle"),
+      sections,
+      "subtitle",
+      pickAboutField("subtitle")
+    );
+    await renderAboutMarkdownSection(
+      document.getElementById("about-intro"),
+      sections,
+      "intro",
+      pickAboutField("intro")
+    );
+    await renderAboutMarkdownSection(
+      document.getElementById("about-meeting-body"),
+      sections,
+      pickAboutField("meetingSection"),
+      ""
+    );
     set("about-participants-title", pickAboutField("participantsTitle"));
-    set("about-participants-lead", pickAboutField("participantsLead"));
+    await renderAboutMarkdownSection(
+      document.getElementById("about-participants-lead"),
+      sections,
+      "participants-lead",
+      pickAboutField("participantsLead")
+    );
     renderAboutChipRow(document.getElementById("about-participant-chips"), state._aboutPageContent.participantChips);
-    set("about-participants-closing", pickAboutField("participantsClosing"));
+    await renderAboutMarkdownSection(
+      document.getElementById("about-participants-closing"),
+      sections,
+      "participants-closing",
+      pickAboutField("participantsClosing")
+    );
     set("about-partners-title", pickAboutField("partnersTitle"));
-    set("about-partners-text", pickAboutField("partnersText"));
+    await renderAboutMarkdownSection(
+      document.getElementById("about-partners-text"),
+      sections,
+      "partners-text",
+      pickAboutField("partnersText")
+    );
     renderPartnerLogos();
     renderAboutChipRow(document.getElementById("about-partner-chips"), state._aboutPageContent.partnerChips);
     renderInitiators();

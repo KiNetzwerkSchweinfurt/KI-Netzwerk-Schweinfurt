@@ -1,4 +1,4 @@
-## ComfyUI Workshop - AI Network Schweinfurt
+## Second exchange - AI Network Schweinfurt
 
 After the successful kickoff on April 21, one thing is clear: there is strong demand in the region for exchange around artificial intelligence. The first meeting of the AI Network Schweinfurt was very well received and showed how much expertise comes together here. That is exactly what this is about - learning from each other, building connections, and growing together. Building on that momentum, the network now enters the next round - this time with a concrete topic and a practical focus.
 
@@ -19,20 +19,17 @@ After the successful kickoff on April 21, one thing is clear: there is strong de
 - Practitioners who want to better understand AI workflows and apply them in practice
 - SMEs, start-ups, and decision-makers in the region
 
-## Why this topic for the evening?
+## Agenda
 
-- ComfyUI is a powerful framework for modular AI workflow development, especially for generative image and vision applications.
-- Many people already use AI tools at a surface level, but understanding of workflow design, reusability, and practical implementation is often missing.
-- The goal of this meetup is not only to introduce ComfyUI, but also to explain its core concept clearly and demonstrate it concretely through a practical use case.
-- **Practical focus:** How can AI workflows be built in a structured way, adapted, and used for real-world scenarios?
-- **Exchange focus:** Discussion of differences from other workflow platforms such as n8n, plus possible use cases in industry, development, and prototyping.
-- **Learning by doing:** Understand, try, and discuss together.
+- Brief introduction of new participants
+- Talk on change management in AI transformation by **Stefan Lehnert** from [Bosch Rexroth](https://www.boschrexroth.com/de/de/)
+- Short hands-on session on ComfyUI, a powerful framework for the modular development of AI workflows, especially in the field of generative image and vision applications
+- **Open exchange:** Discussion of differences from other workflow platforms such as n8n, as well as possible areas of application in industry, development, and prototyping
+- **Learning by doing:** Understanding, trying things out, and discussing them together
 
 ## Output / Outcome
 
+- Exchange on change management as a strategic success factor for successful AI transformation within companies
 - Accessible introduction to the ComfyUI framework and its core concept
-- Insight into structured AI workflow creation through a practical use case
-- Better understanding of differences between ComfyUI and other workflow frameworks such as n8n
-- Practical impulses for applying generative AI and vision models
 - Exchange with other interested participants and experts from the region
 - Continued growth of the AI Network Schweinfurt through collaborative learning and networking
