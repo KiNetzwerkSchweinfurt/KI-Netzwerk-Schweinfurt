@@ -1,0 +1,49 @@
+{
+  "_meta": {
+    "project": "KI Netzwerk Schweinfurt",
+    "pageName": "Event · Drittes Treffen · KI-Agenten & Robotik",
+    "pathInProject": "data/event/events/event-003-ki-agenten-robotik.json",
+    "developedBy": "Oliver Braun",
+    "github": "https://github.com/olli-br",
+    "developmentStart": "2026-04",
+    "currentVersion": "0.1.0",
+    "updateHistory": [
+      {
+        "date": "2026-08-14",
+        "author": "[GitHub Copilot]",
+        "changes": "Added third meetup event"
+      }
+    ]
+  },
+  "id": 8,
+  "date": "2026-08-19T18:00:00",
+  "image": "./assets/images/event-3.png",
+  "link": "https://eveeno.com/KI-NetzwerkAugust2026",
+  "location": {
+    "venue": {
+      "de": "StudyFAB by netSWerk e.V., Veranstaltungsraum",
+      "en": "StudyFAB by netSWerk e.V., event room"
+    },
+    "street": "Kesslergasse 2",
+    "postalCode": "97421",
+    "city": "Schweinfurt"
+  },
+  "geo": {
+    "lat": 50.0451,
+    "lng": 10.2338
+  },
+  "title": {
+    "de": "Drittes Treffen des KI-Netzwerks Schweinfurt – von KI-Agenten bis humanoider Robotik",
+    "en": "Third meetup of the AI Network Schweinfurt – from AI agents to humanoid robotics"
+  },
+  "detail": {
+    "description": {
+      "de": "Dritte Ausgabe des Netzwerktreffens mit Impulsvorträgen von Eva Lindenberg zu KI-Agenten im Team-Alltag und Jacob Munke zu Physical AI & humanoider Robotik, gefolgt von Kleingruppenarbeit und Networking.",
+      "en": "Third edition of the network meetup with keynote talks by Eva Lindenberg on AI agents in everyday team work and Jacob Munke on Physical AI & humanoid robotics, followed by small-group work and networking."
+    },
+    "contentFile": {
+      "de": "./data/event/events/markdown/event-003-ki-agenten-robotik.de.md",
+      "en": "./data/event/events/markdown/event-003-ki-agenten-robotik.en.md"
+    }
+  }
+}
