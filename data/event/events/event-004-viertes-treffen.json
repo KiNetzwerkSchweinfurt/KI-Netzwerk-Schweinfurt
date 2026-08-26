@@ -1,0 +1,49 @@
+{
+  "_meta": {
+    "project": "KI Netzwerk Schweinfurt",
+    "pageName": "Event · Viertes Treffen",
+    "pathInProject": "data/event/events/event-004-viertes-treffen.json",
+    "developedBy": "Oliver Braun",
+    "github": "https://github.com/olli-br",
+    "developmentStart": "2026-04",
+    "currentVersion": "0.1.0",
+    "updateHistory": [
+      {
+        "date": "2026-08-26",
+        "author": "[GitHub Copilot]",
+        "changes": "Added fourth meetup event"
+      }
+    ]
+  },
+  "id": 9,
+  "date": "2026-10-07T18:00:00",
+  "image": "./assets/images/event-4.svg",
+  "link": "https://eveeno.com/KI-NetzwerkOktober2026",
+  "location": {
+    "venue": {
+      "de": "StudyFAB by netSWerk e.V., Veranstaltungsraum",
+      "en": "StudyFAB by netSWerk e.V., event room"
+    },
+    "street": "Kesslergasse 2",
+    "postalCode": "97421",
+    "city": "Schweinfurt"
+  },
+  "geo": {
+    "lat": 50.0451,
+    "lng": 10.2338
+  },
+  "title": {
+    "de": "Viertes Treffen des KI-Netzwerks Schweinfurt",
+    "en": "Fourth meetup of the AI Network Schweinfurt"
+  },
+  "detail": {
+    "description": {
+      "de": "Vierte Ausgabe des Netzwerktreffens mit einem Überblick über aktuelle KI-Trends, einem Impulsvortrag und interaktiver Kleingruppenarbeit, gefolgt von Networking.",
+      "en": "Fourth edition of the network meetup featuring an overview of current AI trends, a keynote talk and interactive small-group work, followed by networking."
+    },
+    "contentFile": {
+      "de": "./data/event/events/markdown/event-004-viertes-treffen.de.md",
+      "en": "./data/event/events/markdown/event-004-viertes-treffen.en.md"
+    }
+  }
+}

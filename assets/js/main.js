@@ -497,6 +497,9 @@
       const key = el.dataset.i18n;
       el.textContent = getI18n(key);
     });
+    document.querySelectorAll("[data-i18n-alt]").forEach((el) => {
+      el.setAttribute("alt", getI18n(el.dataset.i18nAlt));
+    });
     const filter = document.getElementById("event-filter");
     if (filter) filter.placeholder = getI18n("events.filterPlaceholder");
     syncThemeAria();

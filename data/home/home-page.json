@@ -170,5 +170,9 @@
   "ctaSecondary": {
     "de": "Alle Events ansehen",
     "en": "See all events"
+  },
+  "ctaQrAlt": {
+    "de": "QR-Code zum Beitritt der WhatsApp Community",
+    "en": "QR code to join the WhatsApp community"
   }
 }
