@@ -9,14 +9,18 @@ Nach drei erfolgreichen KI-Netzwerk-Veranstaltungen war klar: Der Bedarf an Aust
 
 ## Agenda (Draft)
 
-**1. Begrüßung und Vorstellungsrunde (10–15 Minuten)**
+**1. Begrüßung und Vorstellungsrunde (5 Minuten)**
 
-**2. Kurze Vorstellung aktueller Trends im Bereich Artificial Intelligence (10–15 Minuten)**
+**2. Kurze Vorstellung aktueller Trends im Bereich Artificial Intelligence (10 Minuten)**
 
-**3. Impulsvortrag + Demo (20 Minuten + 10 Minuten Q&A)**
+**3. Impulsvortrag + Demo (40 Minuten + 10 Minuten Q&A)**
 
-- Vortrag: 20 Minuten
+- Vortrag: 40 Minuten
 - Fragen & Diskussion: 10 Minuten
+
+Im Rahmen des Impulsvortrags wird ein realer Use Case aus dem Arbeitsalltag mithilfe des n8n-Frameworks automatisiert. Seit Mitte letzten Jahres wird das chatbot-assistierte Arbeitsparadigma zunehmend von agentischen, autonomen Automatisierungs-Workflows abgelöst. Die Herausforderung liegt darin, einen Use Case Ende-zu-Ende zu automatisieren und sich dabei sicher sowie konform zu den Unternehmensrichtlinien in bestehende Firmensysteme einzubinden, um eigene Agent-Workflows zu implementieren.
+
+In dieser Session wird anhand eines Live-Demonstrators gezeigt, wie ein Use Case in n8n Schritt für Schritt umgesetzt wird. Für die Nutzung der LLMs werden leistungsstarke lokale Modelle über Ollama an n8n angebunden.
 
 **4. Interaktive Kleingruppenarbeit (ca. 60 Minuten)**
 

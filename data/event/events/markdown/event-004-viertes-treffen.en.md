@@ -9,14 +9,18 @@ After three successful AI Network events, one thing was clear: the demand for ex
 
 ## Agenda (Draft)
 
-**1. Welcome and introduction round (10–15 minutes)**
+**1. Welcome and introduction round (5 minutes)**
 
-**2. Brief overview of current trends in Artificial Intelligence (10–15 minutes)**
+**2. Brief overview of current trends in Artificial Intelligence (10 minutes)**
 
-**3. Keynote talk + demo (20 minutes + 10 minutes Q&A)**
+**3. Keynote talk + demo (40 minutes + 10 minutes Q&A)**
 
-- Talk: 20 minutes
+- Talk: 40 minutes
 - Questions & discussion: 10 minutes
+
+In this keynote talk, a real-world use case from everyday work will be automated using the n8n framework. Since mid last year, the chatbot-assisted work paradigm has increasingly been overtaken by agentic, autonomous automation workflows. The challenge lies in automating a use case end-to-end and safely integrating it into existing company systems in compliance with company policy in order to implement one's own agent workflows.
+
+This session features a live demonstrator showing step by step how a use case is implemented in n8n. Powerful local models are connected to n8n via Ollama for LLM usage.
 
 **4. Interactive small-group work (approx. 60 minutes)**
 
