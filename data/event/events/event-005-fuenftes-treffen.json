@@ -1,0 +1,49 @@
+{
+  "_meta": {
+    "project": "KI Netzwerk Schweinfurt",
+    "pageName": "Event · Fünftes Treffen",
+    "pathInProject": "data/event/events/event-005-fuenftes-treffen.json",
+    "developedBy": "Oliver Braun",
+    "github": "https://github.com/MoriDj",
+    "developmentStart": "2026-04",
+    "currentVersion": "0.1.0",
+    "updateHistory": [
+      {
+        "date": "2026-11-05",
+        "author": "[GitHub Copilot]",
+        "changes": "Added fifth meetup event"
+      }
+    ]
+  },
+  "id": 10,
+  "date": "2026-11-18T18:00:00",
+  "image": "./assets/images/event-4.svg",
+  "link": "",
+  "location": {
+    "venue": {
+      "de": "StudyFAB by netSWerk e.V., Veranstaltungsraum",
+      "en": "StudyFAB by netSWerk e.V., event room"
+    },
+    "street": "Kesslergasse 2",
+    "postalCode": "97421",
+    "city": "Schweinfurt"
+  },
+  "geo": {
+    "lat": 50.0451,
+    "lng": 10.2338
+  },
+  "title": {
+    "de": "Fünftes Treffen des KI-Netzwerks Schweinfurt",
+    "en": "Fifth meetup of the AI Network Schweinfurt"
+  },
+  "detail": {
+    "description": {
+      "de": "Fünfte Ausgabe des Netzwerktreffens mit einem Überblick über aktuelle KI-Trends, einem Impulsvortrag und interaktiver Kleingruppenarbeit, gefolgt von Networking.",
+      "en": "Fifth edition of the network meetup featuring an overview of current AI trends, a keynote talk and interactive small-group work, followed by networking."
+    },
+    "contentFile": {
+      "de": "./data/event/events/markdown/event-005-fuenftes-treffen.de.md",
+      "en": "./data/event/events/markdown/event-005-fuenftes-treffen.en.md"
+    }
+  }
+}

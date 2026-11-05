@@ -32,6 +32,11 @@
         "date": "2026-08-26",
         "author": "[GitHub Copilot]",
         "changes": "Added fourth meetup event"
+      },
+      {
+        "date": "2026-11-05",
+        "author": "[GitHub Copilot]",
+        "changes": "Added fifth meetup event"
       }
     ]
   },
@@ -39,6 +44,7 @@
     "event-001-kickoff.json",
     "event-002-comfyUI-workshop.json",
     "event-003-ki-agenten-robotik.json",
-    "event-004-viertes-treffen.json"
+    "event-004-viertes-treffen.json",
+    "event-005-fuenftes-treffen.json"
   ]
 }

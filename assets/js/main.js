@@ -2783,6 +2783,7 @@
       buttonText: getI18n("events.detail.details"),
       detailUrl: `./events.html?event=${encodeURIComponent(event.id)}`,
       registerUrl: past ? event.recapLink || event.link : event.link,
+      registerHiddenClass: (past ? event.recapLink || event.link : event.link) ? "" : " hidden",
       registerText: past ? getI18n("events.detail.archiveLink") : getI18n("events.detail.register"),
       pastClass: past ? " event-card--past" : "",
       nextClass: isNext ? " event-card--next" : "",
@@ -2862,7 +2863,13 @@
     const past = isEventPast(event);
     const regBtn = document.getElementById("event-detail-link");
     if (regBtn) {
-      regBtn.href = past ? event.recapLink || event.link : event.link;
+      const registerUrl = past ? event.recapLink || event.link : event.link;
+      regBtn.classList.toggle("hidden", !registerUrl);
+      if (registerUrl) {
+        regBtn.href = registerUrl;
+      } else {
+        regBtn.removeAttribute("href");
+      }
     }
     const nextUpcoming = events
       .filter((e) => !isEventPast(e))
